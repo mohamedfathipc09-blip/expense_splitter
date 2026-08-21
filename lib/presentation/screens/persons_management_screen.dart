@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_localization/easy_localization.dart'; // 🔹 مكتبة الترجمة
+import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
 
 class PersonsManagementScreen extends StatelessWidget {
@@ -8,7 +8,6 @@ class PersonsManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 تم إزالة Directionality الثابتة لكي تتجاوب الشاشة مع لغة التطبيق
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: AppBar(
@@ -38,13 +37,13 @@ class PersonsManagementScreen extends StatelessWidget {
             });
           }
 
-          // ترتيب الأشخاص تلقائياً حسب الرصيد (الأعلى أولاً)
+          // ترتيب الأشخاص تلقائياً حسب الرصيد
           personsData.sort((a, b) => b['balance'].compareTo(a['balance']));
 
           return Column(
             children: [
               // ==========================================
-              // 🔹 الكارت الجديد المخصص لتعديل اسم المجموعة
+              // كارت تعديل اسم المجموعة
               // ==========================================
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -63,7 +62,7 @@ class PersonsManagementScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('اسم المجموعة'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text(provider.groupName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
+                          Text(provider.groupName.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
                         ],
                       ),
                     ),
@@ -149,9 +148,9 @@ class PersonsManagementScreen extends StatelessWidget {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      _buildStatItem('ما دفعه'.tr(), paid, provider.currency, Colors.black87),
-                                      _buildStatItem('نصيبه'.tr(), share, provider.currency, Colors.blueGrey),
-                                      _buildStatItem('${'الرصيد'.tr()} ($balanceStatus)', balance, provider.currency, balanceColor),
+                                      _buildStatItem('ما دفعه'.tr(), paid, provider.currency.tr(), Colors.black87),
+                                      _buildStatItem('نصيبه'.tr(), share, provider.currency.tr(), Colors.blueGrey),
+                                      _buildStatItem('${'الرصيد'.tr()} ($balanceStatus)', balance, provider.currency.tr(), balanceColor),
                                     ],
                                   )
                                 ],
@@ -190,9 +189,9 @@ class PersonsManagementScreen extends StatelessWidget {
   // النوافذ المنبثقة (Dialogs)
   // ==========================================
 
-  // 🔹 النافذة الجديدة لتعديل اسم المجموعة
   void _showEditGroupNameDialog(BuildContext context, ExpenseProvider provider) {
-    final nameController = TextEditingController(text: provider.groupName);
+    // 🔹 السطر ده هو اللي اتعدل عشان يخلي المربع فاضي تماماً
+    final nameController = TextEditingController(); 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

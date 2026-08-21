@@ -10,19 +10,28 @@ class ExpenseProvider with ChangeNotifier {
   // ==========================================
   // 1. الميزات المستعادة (العملة، الوضع الليلي، الأرشيف)
   // ==========================================
-  bool _isDarkMode = false;
-  bool get isDarkMode => _isDarkMode;
+  
+  // 🔹 تم التعديل: قراءة وحفظ الوضع الليلي في Hive
+  bool get isDarkMode {
+    final box = Hive.box('settingsBox');
+    return box.get('isDarkMode', defaultValue: false);
+  }
 
   void toggleTheme() {
-    _isDarkMode = !_isDarkMode;
+    final box = Hive.box('settingsBox');
+    box.put('isDarkMode', !isDarkMode);
     notifyListeners();
   }
 
-  String _currency = 'جنيه مصري';
-  String get currency => _currency;
+  // 🔹 تم التعديل: قراءة وحفظ العملة في Hive
+  String get currency {
+    final box = Hive.box('settingsBox');
+    return box.get('currency', defaultValue: 'جنيه');
+  }
 
   void setCurrency(String newCurrency) {
-    _currency = newCurrency;
+    final box = Hive.box('settingsBox');
+    box.put('currency', newCurrency);
     notifyListeners();
   }
 
@@ -249,7 +258,7 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   // ==========================================
-  // 5. الميزانية المستهدفة (الميزة الجديدة)
+  // 5. الميزانية المستهدفة
   // ==========================================
   double get targetBudget {
     final box = Hive.box('settingsBox');
@@ -263,7 +272,7 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   // ==========================================
-  // 6. اسم المجموعة (الميزة المضافة لحل الخطأ)
+  // 6. اسم المجموعة
   // ==========================================
   String get groupName {
     final box = Hive.box('settingsBox');
