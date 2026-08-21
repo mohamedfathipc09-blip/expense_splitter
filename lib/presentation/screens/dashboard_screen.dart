@@ -1,14 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 import 'report_screen.dart';
-import 'archive_screen.dart';
 import 'settings_screen.dart';
 import 'settlement_screen.dart';
 import 'add_expense_screen.dart';
 import 'persons_management_screen.dart';
 import 'transactions_screen.dart';
-import 'privacy_policy_screen.dart'; // 🔹 استدعاء شاشة سياسة الخصوصية الجديدة
+import 'privacy_policy_screen.dart'; 
 import '../providers/expense_provider.dart';
 
 // ==========================================
@@ -22,46 +22,94 @@ class QesmaDashboardScreen extends StatefulWidget {
 }
 
 class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 1;
 
-  // 🔹 نافذة تواصل معنا
-  void _showContactUs(BuildContext context) {
-    showDialog(
+  // 🔹 نافذة الإشعارات الاحترافية (Bottom Sheet)
+  void _showNotificationsPopup(BuildContext context, ExpenseProvider provider) {
+    final alerts = provider.smartAlerts;
+    
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.55,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 5)
+          ]
+        ),
+        child: Column(
           children: [
-            const Icon(Icons.email, color: Colors.blue),
-            const SizedBox(width: 8),
-            Text('تواصل معنا'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            // خط السحب الصغير في الأعلى
+            Container(
+              width: 40, 
+              height: 5, 
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300, 
+                borderRadius: BorderRadius.circular(10)
+              )
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.amber, size: 24),
+                const SizedBox(width: 8),
+                Text('الإشعارات والتنبيهات'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const Divider(height: 30),
+            Expanded(
+              child: alerts.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey.shade400),
+                          const SizedBox(height: 16),
+                          Text('لا توجد إشعارات حالياً'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: alerts.length,
+                      itemBuilder: (context, index) {
+                        final alert = alerts[index];
+                        final color = alert['color'] as MaterialColor;
+                        return Card(
+                          elevation: 0,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          color: color.withValues(alpha: 0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: color.withValues(alpha: 0.2), width: 1)
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(12),
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
+                              child: Icon(alert['icon'], color: color.shade700),
+                            ),
+                            title: Text((alert['title'] as String).tr(), style: TextStyle(fontWeight: FontWeight.bold, color: color.shade900, fontSize: 14)),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text((alert['subtitle'] as String).tr(), style: TextStyle(color: color.shade800, fontSize: 12)),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.mail_outline, color: Colors.redAccent),
-              title: const Text('mohamedfathipc09@gmail.com'), // ✏️ يمكنك تعديل الإيميل هنا
-              onTap: () {}, 
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.language, color: Colors.blueGrey),
-              title: const Text(''),
-              subtitle: const Text('GitHub'),
-              onTap: () {}, 
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('إغلاق'.tr(), style: const TextStyle(color: Colors.blue)),
-          )
-        ],
-      )
+      ),
     );
   }
 
@@ -103,7 +151,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                     },
                   ),
                   const Divider(),
-                  // 🔹 زر سياسة الخصوصية الجديد
                   ListTile(
                     leading: const Icon(Icons.privacy_tip_outlined, color: Colors.black87),
                     title: Text('سياسة الخصوصية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -115,40 +162,45 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                       );
                     },
                   ),
-                  // 🔹 زر تواصل معنا
                   ListTile(
                     leading: const Icon(Icons.email_outlined, color: Colors.black87),
                     title: Text('تواصل معنا'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showContactUs(context);
+                    onTap: () async {
+                      Navigator.pop(context); 
+                      final Uri emailUri = Uri.parse("mailto:mohamedfathipc09@gmail.com?subject=تطبيق قسمة المصاريف");
+                      
+                      try {
+                        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت'.tr()))
+                          );
+                        }
+                      }
                     },
                   ),
                 ],
               ),
             ),
-            // ==========================================
-            // 🔹 توقيع المطور (احترافي باللغة الإنجليزية)
-            // ==========================================
             Container(
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               alignment: Alignment.center,
               child: Column(
                 children: [
-                  Text('Qesma Expenses'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                  const Text('Qesma Expenses', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.blueGrey, letterSpacing: 1.2)),
                   const SizedBox(height: 4),
-                  Text('Version 1.0.0'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  const Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.code, color: Colors.teal, size: 16),
+                      const Icon(Icons.terminal, color: Colors.teal, size: 16),
                       const SizedBox(width: 6),
-                      Text('Developed by'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      const SizedBox(width: 4),
+                      const Text('Developed by ', style: TextStyle(fontSize: 12, color: Colors.grey)),
                       const Text(
                         'Mohamed Fathi', 
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal, letterSpacing: 0.5)
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal)
                       ),
                     ],
                   )
@@ -161,22 +213,22 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          if (index == 0) return; 
+          if (index == 1) return; 
 
-          if (index == 1) {
+          if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
           }
           else if (index == 2) {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
           }
-          setState(() => _currentIndex = 0);
+          setState(() => _currentIndex = 1); 
         },
         elevation: 0,
         backgroundColor: theme.colorScheme.surfaceContainerLowest,
         indicatorColor: theme.colorScheme.primaryContainer,
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: 'الرئيسية'.tr()),
           NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long), label: 'العمليات'.tr()),
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: 'الرئيسية'.tr()),
           NavigationDestination(icon: const Icon(Icons.pie_chart_outline), selectedIcon: const Icon(Icons.pie_chart), label: 'الإحصائيات'.tr()),
         ],
       ),
@@ -185,7 +237,8 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(child: _HeaderSection(provider: provider)), 
+            // 🔹 تمرير الدالة للـ Header لكي يفتح النافذة
+            SliverToBoxAdapter(child: _HeaderSection(provider: provider, onNotificationTap: () => _showNotificationsPopup(context, provider))), 
             SliverPadding(
               padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
               sliver: SliverList(
@@ -220,10 +273,14 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
 // ==========================================
 class _HeaderSection extends StatelessWidget {
   final ExpenseProvider provider;
-  const _HeaderSection({required this.provider});
+  final VoidCallback onNotificationTap; // 🔹 دالة فتح الإشعارات
+  
+  const _HeaderSection({required this.provider, required this.onNotificationTap});
 
   @override
   Widget build(BuildContext context) {
+    final alertsCount = provider.smartAlerts.length; // حساب عدد الإشعارات
+
     return FadeInSlide(
       delay: 0,
       child: Padding(
@@ -256,9 +313,15 @@ class _HeaderSection extends StatelessWidget {
                 ],
               ),
             ),
+            // 🔹 زر الإشعارات مع الرقم (Badge)
             IconButton(
-              icon: const Badge(child: Icon(Icons.notifications_outlined)),
-              onPressed: () {},
+              icon: Badge(
+                isLabelVisible: alertsCount > 0, // يظهر فقط لو في إشعارات
+                label: Text('$alertsCount'),
+                backgroundColor: Colors.redAccent,
+                child: const Icon(Icons.notifications_outlined)
+              ),
+              onPressed: onNotificationTap, // يفتح النافذة المنبثقة
             ),
             IconButton(
               icon: const Icon(Icons.menu), 
@@ -593,37 +656,22 @@ class _QuickActionsSection extends StatelessWidget {
         children: [
           _SectionTitle(title: 'الإجراءات السريعة'.tr()),
           const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                _ActionItem(icon: Icons.add, label: 'إضافة'.tr(), isPrimary: true, onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
-                }),
-                _ActionItem(icon: Icons.people_alt_outlined, label: 'الأشخاص'.tr(), onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonsManagementScreen()));
-                }),
-                _ActionItem(icon: Icons.handshake_outlined, label: 'مخالصة'.tr(), onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SettlementScreen()));
-                }),
-                _ActionItem(icon: Icons.bar_chart, label: 'التقارير'.tr(), onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
-                }),
-                _ActionItem(icon: Icons.folder_outlined, label: 'الأرشيف'.tr(), onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const ArchiveScreen()));
-                }),
-                _ActionItem(icon: Icons.cloud_upload_outlined, label: 'نسخ احتياطي'.tr(), onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('يمكنك إدارة النسخ الاحتياطي من شاشة الإعدادات'.tr(), style: const TextStyle(fontFamily: 'Cairo')),
-                      backgroundColor: Colors.teal,
-                      behavior: SnackBarBehavior.floating,
-                    )
-                  );
-                }),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _ActionItem(icon: Icons.add, label: 'إضافة'.tr(), isPrimary: true, onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
+              }),
+              _ActionItem(icon: Icons.people_alt_outlined, label: 'الأشخاص'.tr(), onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonsManagementScreen()));
+              }),
+              _ActionItem(icon: Icons.handshake_outlined, label: 'مخالصة'.tr(), onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SettlementScreen()));
+              }),
+              _ActionItem(icon: Icons.bar_chart, label: 'التقارير'.tr(), onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
+              }),
+            ],
           ),
         ],
       ),
@@ -643,7 +691,7 @@ class _ActionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsetsDirectional.only(end: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         children: [
           Material(

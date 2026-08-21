@@ -171,5 +171,13 @@
   "مثال: رحلة الإسكندرية...": "e.g., Summer Trip...",
   "سياسة الخصوصية": "Privacy Policy",
   "تواصل معنا": "Contact Us",
-  "إغلاق": "Close"
+  "إغلاق": "Close",
+  "تجاوزت الميزانية!": "Budget Exceeded!",
+  "لقد استهلكت 100% من الميزانية المحددة.": "You have consumed 100% of the target budget.",
+  "نصف الميزانية!": "Half Budget Reached!",
+  "لم يقم بأي دفع!": "hasn't paid anything!",
+  "تأكد من مشاركة المصروفات بإنصاف.": "Make sure expenses are shared fairly.",
+  "آخر عملية كانت منذ": "Last transaction was",
+  "أيام.": "days ago.",
+  "لقد استهلكت أكثر من 50% من الميزانية المحددة.": "You have consumed more than 50% of the target budget."
 }

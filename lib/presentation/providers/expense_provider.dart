@@ -11,7 +11,6 @@ class ExpenseProvider with ChangeNotifier {
   // 1. الميزات المستعادة (العملة، الوضع الليلي، الأرشيف)
   // ==========================================
   
-  // 🔹 تم التعديل: قراءة وحفظ الوضع الليلي في Hive
   bool get isDarkMode {
     final box = Hive.box('settingsBox');
     return box.get('isDarkMode', defaultValue: false);
@@ -23,7 +22,6 @@ class ExpenseProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔹 تم التعديل: قراءة وحفظ العملة في Hive
   String get currency {
     final box = Hive.box('settingsBox');
     return box.get('currency', defaultValue: 'جنيه');
@@ -65,7 +63,6 @@ class ExpenseProvider with ChangeNotifier {
     final personBox = Hive.box<String>('persons');
     _persons = personBox.values.toList();
 
-    // تحميل الأرشيف من قاعدة البيانات
     if (!Hive.isBoxOpen('archivesBox')) {
       await Hive.openBox('archivesBox');
     }
@@ -137,7 +134,6 @@ class ExpenseProvider with ChangeNotifier {
       int index = _persons.indexOf(oldName);
       if (index != -1) _persons[index] = newName;
 
-      // تحديث العمليات المرتبطة بهذا الشخص
       final box = Hive.box<ExpenseModel>('expenses');
       for (var exp in _expenses) {
         if (exp.payer == oldName) {
@@ -194,26 +190,24 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   Future<void> settleAndArchive(String title) async {
-    if (_expenses.isEmpty) return; // لا تقم بالأرشفة إذا لم يكن هناك مصروفات
+    if (_expenses.isEmpty) return;
 
     if (!Hive.isBoxOpen('archivesBox')) {
       await Hive.openBox('archivesBox');
     }
     final archiveBox = Hive.box('archivesBox');
 
-    // 🔹 1. إنشاء ملخص التسويات (مين عليه كام) قبل مسح العمليات
     final List<String> summaryLines = settlementTransactions.map((s) {
       return "${s['from']} يدفع لـ ${s['to']} مبلغ ${s['amount'].toStringAsFixed(2)} $currency";
     }).toList();
 
-    // 2. تجميع بيانات الدورة الحالية
     final Map<String, dynamic> cycleData = {
       'title': title,
       'date': DateTime.now().toIso8601String(),
       'totalAmount': _expenses.fold(0.0, (sum, item) => sum + item.amount),
       'expensesCount': _expenses.length,
       'personsCount': _persons.length,
-      'settlementSummary': summaryLines, // 🔹 حفظ التسويات هنا كجزء من الأرشيف
+      'settlementSummary': summaryLines,
       'expensesList': _expenses.map((e) => {
         'title': e.title,
         'amount': e.amount,
@@ -223,11 +217,9 @@ class ExpenseProvider with ChangeNotifier {
       }).toList(),
     };
 
-    // 3. إضافة الدورة للأرشيف
     await archiveBox.add(cycleData);
     _archives.add(cycleData);
 
-    // 4. مسح بيانات الدورة
     final box = Hive.box<ExpenseModel>('expenses');
     await box.clear();
     _expenses.clear();
@@ -236,24 +228,66 @@ class ExpenseProvider with ChangeNotifier {
   }
 
   // ==========================================
-  // 4. محرك التنبيهات الذكية 
+  // 4. محرك التنبيهات الذكية (محدث ليدعم 50% و 100% للميزانية)
   // ==========================================
   List<Map<String, dynamic>> get smartAlerts {
     List<Map<String, dynamic>> alerts = [];
-    if (_persons.isEmpty) return [{'title': 'أهلاً بك!', 'subtitle': 'ابدأ بإضافة الأشخاص.', 'icon': Icons.group_add, 'color': Colors.blue}];
-    if (_expenses.isEmpty) return [{'title': 'المجموعة جاهزة!', 'subtitle': 'أضف أول مصروف.', 'icon': Icons.receipt_long, 'color': Colors.teal}];
+    
+    if (_persons.isEmpty) {
+      return [{'title': 'أهلاً بك!', 'subtitle': 'ابدأ بإضافة الأشخاص.', 'icon': Icons.group_add, 'color': Colors.blue}];
+    }
+    if (_expenses.isEmpty) {
+      return [{'title': 'المجموعة جاهزة!', 'subtitle': 'أضف أول مصروف.', 'icon': Icons.receipt_long, 'color': Colors.teal}];
+    }
 
-    for (var person in _persons) {
-      if (!_expenses.any((e) => e.payer == person)) {
-        alerts.add({'title': '$person لم يقم بأي دفع!', 'subtitle': 'تأكد من مشاركة المصروفات.', 'icon': Icons.info_outline, 'color': Colors.blueGrey});
+    // 🔹 تنبيهات الميزانية المستهدفة (50% و 100%)
+    double totalExpenses = _expenses.fold(0.0, (sum, item) => sum + item.amount);
+    if (targetBudget > 0) {
+      double percentage = totalExpenses / targetBudget;
+      if (percentage >= 1.0) {
+        alerts.add({
+          'title': 'تجاوزت الميزانية!',
+          'subtitle': 'لقد استهلكت 100% من الميزانية المحددة.',
+          'icon': Icons.warning_rounded,
+          'color': Colors.red
+        });
+      } else if (percentage >= 0.5) {
+        alerts.add({
+          'title': 'نصف الميزانية!',
+          'subtitle': 'لقد استهلكت أكثر من 50% من الميزانية المحددة.',
+          'icon': Icons.pie_chart,
+          'color': Colors.orange
+        });
       }
     }
 
-    _expenses.sort((a, b) => b.date.compareTo(a.date));
-    final difference = DateTime.now().difference(_expenses.first.date).inDays;
-    if (difference >= 7) {
-      alerts.add({'title': 'لم تتم المخالصة منذ فترة!', 'subtitle': 'آخر عملية كانت منذ $difference أيام.', 'icon': Icons.event_busy, 'color': Colors.orange});
+    // 🔹 تنبيهات الأشخاص الذين لم يدفعوا
+    for (var person in _persons) {
+      if (!_expenses.any((e) => e.payer == person)) {
+        alerts.add({
+          'title': '$person لم يقم بأي دفع!',
+          'subtitle': 'تأكد من مشاركة المصروفات.',
+          'icon': Icons.info_outline,
+          'color': Colors.blueGrey
+        });
+      }
     }
+
+    // 🔹 تنبيهات أيام المخالصة
+    if (_expenses.isNotEmpty) {
+      List<ExpenseModel> sortedExpenses = List.from(_expenses);
+      sortedExpenses.sort((a, b) => b.date.compareTo(a.date));
+      final difference = DateTime.now().difference(sortedExpenses.first.date).inDays;
+      if (difference >= 7) {
+        alerts.add({
+          'title': 'لم تتم المخالصة منذ فترة!',
+          'subtitle': 'آخر عملية كانت منذ $difference أيام.',
+          'icon': Icons.event_busy,
+          'color': Colors.orange
+        });
+      }
+    }
+    
     return alerts;
   }
 
