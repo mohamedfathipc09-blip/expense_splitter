@@ -12,7 +12,6 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // استخدام .tr() يخبر التطبيق بتبديل هذه الكلمة حسب اللغة المختارة
         title: Text('الإعدادات'.tr()), 
       ),
       body: Consumer<ExpenseProvider>(
@@ -32,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
               const Divider(),
 
               // ==========================================
-              // 🔹 زر تغيير اللغة الذي تمت إضافته
+              // 🔹 زر تغيير اللغة
               // ==========================================
               ListTile(
                 leading: const Icon(Icons.language, color: Colors.indigo),
@@ -55,7 +54,8 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.attach_money),
                 title: Text('العملة الافتراضية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${'العملة الحالية:'.tr()} ${provider.currency}'),
+                // 🔹 التعديل هنا: ترجمة العملة الحالية أيضاً
+                subtitle: Text('${'العملة الحالية:'.tr()} ${provider.currency.tr()}'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   _showCurrencyDialog(context, provider);

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart' hide TextDirection;
+import 'package:easy_localization/easy_localization.dart'; // 🔹 مكتبة الترجمة
 import '../providers/expense_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:typed_data';
@@ -15,88 +15,78 @@ class ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F9),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: const Text('تقرير المصروفات', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
-          centerTitle: true,
-          iconTheme: const IconThemeData(color: Colors.black87),
-        ),
-        body: Consumer<ExpenseProvider>(
-          builder: (context, provider, child) {
-            // ==========================================
-            // الحسابات والخوارزميات 
-            // ==========================================
-            final int totalPersons = provider.persons.length;
-            final int totalTransactions = provider.expenses.length;
-            final double totalExpenses = provider.expenses.fold(0, (sum, item) => sum + item.amount);
-            final double sharePerPerson = totalPersons > 0 ? totalExpenses / totalPersons : 0;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F9),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text('تقرير المصروفات'.tr(), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
+      body: Consumer<ExpenseProvider>(
+        builder: (context, provider, child) {
+          final int totalPersons = provider.persons.length;
+          final int totalTransactions = provider.expenses.length;
+          final double totalExpenses = provider.expenses.fold(0, (sum, item) => sum + item.amount);
+          final double sharePerPerson = totalPersons > 0 ? totalExpenses / totalPersons : 0;
 
-            Map<String, double> paidAmounts = {for (var p in provider.persons) p: 0.0};
-            for (var exp in provider.expenses) {
-              if (paidAmounts.containsKey(exp.payer)) {
-                paidAmounts[exp.payer] = (paidAmounts[exp.payer] ?? 0.0) + exp.amount;
-              }
+          Map<String, double> paidAmounts = {for (var p in provider.persons) p: 0.0};
+          for (var exp in provider.expenses) {
+            if (paidAmounts.containsKey(exp.payer)) {
+              paidAmounts[exp.payer] = (paidAmounts[exp.payer] ?? 0.0) + exp.amount;
             }
+          }
 
-            Map<String, double> balances = {};
-            for (var p in provider.persons) {
-              balances[p] = (paidAmounts[p] ?? 0.0) - sharePerPerson;
-            }
+          Map<String, double> balances = {};
+          for (var p in provider.persons) {
+            balances[p] = (paidAmounts[p] ?? 0.0) - sharePerPerson;
+          }
 
-            List<Map<String, dynamic>> settlements = _calculateSettlements(balances);
+          List<Map<String, dynamic>> settlements = _calculateSettlements(balances);
 
-            // ==========================================
-            // واجهة التقرير (UI) 
-            // ==========================================
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildHeader(context, provider),
-                      const Divider(thickness: 2, color: Color(0xFF005C53)),
-                      _buildResponsiveSummaryCards(totalExpenses, sharePerPerson, totalTransactions, totalPersons),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.bar_chart, color: Color(0xFF005C53)),
-                            SizedBox(width: 8),
-                            Text('تفاصيل الحسابات والأرصدة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
-                          ],
-                        ),
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5))],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(context, provider),
+                    const Divider(thickness: 2, color: Color(0xFF005C53)),
+                    _buildResponsiveSummaryCards(totalExpenses, sharePerPerson, totalTransactions, totalPersons),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.bar_chart, color: Color(0xFF005C53)),
+                          const SizedBox(width: 8),
+                          Text('تفاصيل الحسابات والأرصدة'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
+                        ],
                       ),
-                      _buildAccountsTable(provider.persons, paidAmounts, sharePerPerson, balances),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildSettlementsSection(settlements, provider.currency),
-                      ),
-                      const SizedBox(height: 24),
-                      // الأزرار السفلية (زر الـ PDF)
-                      _buildActionButtons(context, provider, totalExpenses, sharePerPerson, paidAmounts, balances, settlements, totalTransactions),
-                      const SizedBox(height: 16),
-                      _buildFooter(),
-                    ],
-                  ),
+                    ),
+                    _buildAccountsTable(provider.persons, paidAmounts, sharePerPerson, balances),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _buildSettlementsSection(settlements, provider.currency.tr()),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildActionButtons(context, provider, totalExpenses, sharePerPerson, paidAmounts, balances, settlements, totalTransactions),
+                    const SizedBox(height: 16),
+                    _buildFooter(context),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -140,13 +130,13 @@ class ReportScreen extends StatelessWidget {
                 child: const Icon(Icons.account_balance_wallet, color: Color(0xFF005C53), size: 36),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('التقرير الشامل', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
-                    SizedBox(height: 4),
-                    Text('تطبيق قسمة للمصروفات', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('التقرير الشامل'.tr(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                    const SizedBox(height: 4),
+                    Text('تطبيق قسمة للمصروفات'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
                 ),
               ),
@@ -163,9 +153,10 @@ class ReportScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _infoItem(Icons.calendar_today, DateFormat('dd-MM-yyyy').format(DateTime.now())),
-                _infoItem(Icons.groups, provider.groupName),
-                _infoItem(Icons.payments, provider.currency),
+                _infoItem(Icons.calendar_today, DateFormat('dd-MM-yyyy', context.locale.languageCode).format(DateTime.now())),
+                // 🔹 ترجمة اسم المجموعة
+                _infoItem(Icons.groups, provider.groupName.tr()),
+                _infoItem(Icons.payments, provider.currency.tr()),
               ],
             ),
           )
@@ -191,17 +182,17 @@ class ReportScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _statCard('إجمالي المصروفات', total.toStringAsFixed(2), Icons.account_balance_wallet, Colors.teal)),
+              Expanded(child: _statCard('إجمالي المصروفات'.tr(), total.toStringAsFixed(2), Icons.account_balance_wallet, Colors.teal)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('نصيب الفرد', share.toStringAsFixed(2), Icons.person, Colors.blue)),
+              Expanded(child: _statCard('نصيب الفرد'.tr(), share.toStringAsFixed(2), Icons.person, Colors.blue)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _statCard('عدد العمليات', '$transactions', Icons.receipt_long, Colors.purple)),
+              Expanded(child: _statCard('عدد العمليات'.tr(), '$transactions', Icons.receipt_long, Colors.purple)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('عدد الأشخاص', '$persons', Icons.groups, Colors.orange)),
+              Expanded(child: _statCard('عدد الأشخاص'.tr(), '$persons', Icons.groups, Colors.orange)),
             ],
           ),
         ],
@@ -244,12 +235,12 @@ class ReportScreen extends StatelessWidget {
           child: DataTable(
             headingRowColor: WidgetStateProperty.all(const Color(0xFF005C53)),
             columnSpacing: 20,
-            columns: const [
-              DataColumn(label: Text('الشخص', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('ما دفعه', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('نصيبه', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('الرصيد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('الحالة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+            columns: [
+              DataColumn(label: Text('الشخص'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('ما دفعه'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('نصيبه المفترض'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('الرصيد النهائي'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('الحالة'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
             ],
             rows: persons.map((person) {
               double bal = balances[person] ?? 0.0;
@@ -270,7 +261,7 @@ class ReportScreen extends StatelessWidget {
                       Icon(isSettled ? Icons.check_circle : (isCreditor ? Icons.arrow_circle_up : Icons.arrow_circle_down),
                           color: isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red), size: 16),
                       const SizedBox(width: 4),
-                      Text(isSettled ? 'خالص' : (isCreditor ? 'له' : 'عليه'),
+                      Text(isSettled ? 'خالص'.tr() : (isCreditor ? 'له'.tr() : 'عليه'.tr()),
                           style: TextStyle(color: isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red), fontWeight: FontWeight.bold, fontSize: 12)),
                     ],
                   )),
@@ -294,16 +285,16 @@ class ReportScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.sync_alt, color: Color(0xFF005C53)),
-              SizedBox(width: 8),
-              Text('اقتراحات التسوية', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
+              const Icon(Icons.sync_alt, color: Color(0xFF005C53)),
+              const SizedBox(width: 8),
+              Text('اقتراحات التسوية'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
             ],
           ),
           const SizedBox(height: 12),
           if (settlements.isEmpty)
-            const Text('لا توجد مبالغ مستحقة، جميع الحسابات خالصة!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
+            Text('لا توجد مبالغ مستحقة، جميع الحسابات خالصة!'.tr(), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
           else
             ...settlements.map((s) => Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
@@ -313,7 +304,7 @@ class ReportScreen extends StatelessWidget {
                       Row(children: [const Icon(Icons.person, color: Colors.teal, size: 16), const SizedBox(width: 4), Text(s['from'], style: const TextStyle(fontWeight: FontWeight.bold))]),
                       Column(
                         children: [
-                          const Text('يدفع إلى', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                          Text('يدفع إلى'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
                           Text('${s['amount'].toStringAsFixed(2)} $currency', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
                           const Icon(Icons.arrow_forward, color: Colors.teal, size: 16),
                         ],
@@ -335,7 +326,7 @@ class ReportScreen extends StatelessWidget {
         runSpacing: 8,
         alignment: WrapAlignment.center,
         children: [
-          _actionButton(Icons.share, 'مشاركة وحفظ PDF', Colors.blue, () async {
+          _actionButton(Icons.share, 'مشاركة وحفظ PDF'.tr(), Colors.blue, () async {
             await _generateAndSharePDF(context, provider, total, share, paid, balances, settlements, transactions);
           }),
         ],
@@ -366,23 +357,22 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
-  // دالة إنشاء ومشاركة الـ PDF (بالخطوط المحلية)
-  // ==========================================
   Future<void> _generateAndSharePDF(BuildContext context, ExpenseProvider provider, double totalExpenses, double share, Map<String, double> paidAmounts, Map<String, double> balances, List<Map<String, dynamic>> settlements, int totalTransactions) async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('جاري إنشاء التقرير الاحترافي...')));
+    // 🔹 استخراج اللغة قبل أي عملية await لتفادي خطأ الـ Context
+    final String currentLang = context.locale.languageCode;
+    final bool isArabic = currentLang == 'ar';
+    
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('جاري إنشاء التقرير الاحترافي...'.tr())));
 
     try {
       final pdf = pw.Document();
       
-      // التعديل هنا: جلب الخطوط من ملفات التطبيق (بدون إنترنت)
       final regularData = await rootBundle.load('assets/fonts/cairo_regular.ttf');
       final arabicFont = pw.Font.ttf(regularData);
 
       final boldData = await rootBundle.load('assets/fonts/cairo_bold.ttf');
       final arabicFontBold = pw.Font.ttf(boldData);
 
-      // محاولة جلب اللوجو 
       pw.MemoryImage? logoImage;
       try {
         final ByteData data = await rootBundle.load('assets/images/logo.jpg');
@@ -391,21 +381,22 @@ class ReportScreen extends StatelessWidget {
         debugPrint('Logo not found, proceeding without it.');
       }
 
-      // تعريف الألوان المستخدمة في التصميم
       final tealColor = PdfColor.fromHex('#008080');
       final darkBlueColor = PdfColor.fromHex('#1E3A8A');
       final redColor = PdfColor.fromHex('#D32F2F');
       final greenColor = PdfColor.fromHex('#388E3C');
       final lightGrey = PdfColor.fromHex('#F8F9FA');
       
+      // 🔹 تحديد اتجاه الـ PDF حسب لغة التطبيق
+      final pdfTextDirection = isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr;
+      
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(24),
-          textDirection: pw.TextDirection.rtl, 
+          textDirection: pdfTextDirection, 
           theme: pw.ThemeData.withFont(base: arabicFont, bold: arabicFontBold),
-          // الفوتر السفلي المتطابق مع الصورة (شريط أزرق داكن)
-          footer: (pw.Context context) {
+          footer: (pw.Context pwContext) {
             return pw.Container(
               padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: pw.BoxDecoration(
@@ -415,20 +406,18 @@ class ReportScreen extends StatelessWidget {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('تطبيق قسمة - إدارة المصروفات المشتركة', style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
-                  pw.Text('${DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())} | صفحة ${context.pageNumber} من ${context.pagesCount}', style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
+                  pw.Text('تطبيق قسمة - إدارة المصروفات المشتركة'.tr(), style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
+                  pw.Text('${DateFormat('dd-MM-yyyy hh:mm a', currentLang).format(DateTime.now())} | ${'صفحة'.tr()} ${pwContext.pageNumber} ${'من'.tr()} ${pwContext.pagesCount}', style: const pw.TextStyle(color: PdfColors.white, fontSize: 10)),
                 ]
               )
             );
           },
-          build: (pw.Context context) {
+          build: (pw.Context pwContext) {
             return [
-              // 1. الترويسة العلوية المتطابقة
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  // صندوق المعلومات (يمين)
                   pw.Container(
                     width: 150,
                     padding: const pw.EdgeInsets.all(8),
@@ -440,23 +429,21 @@ class ReportScreen extends StatelessWidget {
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text('تاريخ التقرير: ${DateFormat('dd-MM-yyyy').format(DateTime.now())}', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('${'تاريخ التقرير:'.tr()} ${DateFormat('dd-MM-yyyy', currentLang).format(DateTime.now())}', style: const pw.TextStyle(fontSize: 9)),
                         pw.Divider(color: PdfColors.grey300, height: 8),
-                        pw.Text('المجموعة: ${provider.groupName}', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('${'المجموعة:'.tr()} ${provider.groupName.tr()}', style: const pw.TextStyle(fontSize: 9)),
                         pw.Divider(color: PdfColors.grey300, height: 8),
-                        pw.Text('العملة: ${provider.currency}', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('${'العملة:'.tr()} ${provider.currency.tr()}', style: const pw.TextStyle(fontSize: 9)),
                       ]
                     )
                   ),
-                  // العنوان (وسط)
                   pw.Column(
                     children: [
-                      pw.Text('تقرير المصروفات الشامل', style: pw.TextStyle(font: arabicFontBold, fontSize: 22, color: darkBlueColor)),
+                      pw.Text('التقرير الشامل'.tr(), style: pw.TextStyle(font: arabicFontBold, fontSize: 22, color: darkBlueColor)),
                       pw.SizedBox(height: 4),
-                      pw.Text('تطبيق قسمة - إدارة المصروفات المشتركة', style: pw.TextStyle(fontSize: 12, color: PdfColors.grey600)),
+                      pw.Text('تطبيق قسمة للمصروفات'.tr(), style: pw.TextStyle(fontSize: 12, color: PdfColors.grey600)),
                     ]
                   ),
-                  // اللوجو (يسار)
                   if (logoImage != null)
                     pw.Image(logoImage, width: 70, height: 70)
                   else
@@ -466,36 +453,32 @@ class ReportScreen extends StatelessWidget {
               
               pw.SizedBox(height: 24),
 
-              // 2. كروت الإحصائيات 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildPdfStatCard('عدد الأشخاص', '${provider.persons.length}', 'أشخاص', arabicFontBold, tealColor),
-                  _buildPdfStatCard('عدد العمليات', '$totalTransactions', 'عملية', arabicFontBold, PdfColor.fromHex('#6A1B9A')),
-                  _buildPdfStatCard('نصيب الفرد', share.toStringAsFixed(2), provider.currency, arabicFontBold, PdfColor.fromHex('#1565C0')),
-                  _buildPdfStatCard('إجمالي المصروفات', totalExpenses.toStringAsFixed(2), provider.currency, arabicFontBold, greenColor),
+                  _buildPdfStatCard('عدد الأشخاص'.tr(), '${provider.persons.length}', 'أشخاص'.tr(), arabicFontBold, tealColor),
+                  _buildPdfStatCard('عدد العمليات'.tr(), '$totalTransactions', 'عملية'.tr(), arabicFontBold, PdfColor.fromHex('#6A1B9A')),
+                  _buildPdfStatCard('نصيب الفرد'.tr(), share.toStringAsFixed(2), provider.currency.tr(), arabicFontBold, PdfColor.fromHex('#1565C0')),
+                  _buildPdfStatCard('إجمالي المصروفات'.tr(), totalExpenses.toStringAsFixed(2), provider.currency.tr(), arabicFontBold, greenColor),
                 ]
               ),
               
               pw.SizedBox(height: 24),
-              pw.Text('تفاصيل الحسابات والأرصدة', style: pw.TextStyle(font: arabicFontBold, fontSize: 16, color: tealColor)),
+              pw.Text('تفاصيل الحسابات والأرصدة'.tr(), style: pw.TextStyle(font: arabicFontBold, fontSize: 16, color: tealColor)),
               pw.SizedBox(height: 8),
 
-              // 3. الجدول الاحترافي 
               pw.Table(
                 border: pw.TableBorder.all(color: PdfColors.grey300, width: 1),
                 children: [
-                  // صف العناوين 
                   pw.TableRow(
                     decoration: pw.BoxDecoration(color: tealColor),
                     children: [
-                      'الشخص', 'ما دفعه', 'نصيبه المفترض', 'الرصيد النهائي', 'الحالة'
+                      'الشخص'.tr(), 'ما دفعه'.tr(), 'نصيبه المفترض'.tr(), 'الرصيد النهائي'.tr(), 'الحالة'.tr()
                     ].map((t) => pw.Padding(
                       padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 4), 
                       child: pw.Text(t, style: pw.TextStyle(color: PdfColors.white, font: arabicFontBold, fontSize: 11), textAlign: pw.TextAlign.center)
                     )).toList(),
                   ),
-                  // صفوف البيانات
                   ...provider.persons.map((person) {
                     double bal = balances[person] ?? 0.0;
                     bool isCreditor = bal > 0.01;
@@ -507,7 +490,6 @@ class ReportScreen extends StatelessWidget {
                         _pdfTableCell(person, arabicFontBold),
                         _pdfTableCell((paidAmounts[person] ?? 0.0).toStringAsFixed(2), arabicFontBold),
                         _pdfTableCell(share.toStringAsFixed(2), arabicFontBold),
-                        // الرصيد النهائي ملون
                         pw.Padding(
                           padding: const pw.EdgeInsets.symmetric(vertical: 8),
                           child: pw.Text(
@@ -516,13 +498,12 @@ class ReportScreen extends StatelessWidget {
                             textAlign: pw.TextAlign.center
                           )
                         ),
-                        // الحالة مع الدوائر الملونة 
                         pw.Padding(
                           padding: const pw.EdgeInsets.symmetric(vertical: 8),
                           child: pw.Row(
                             mainAxisAlignment: pw.MainAxisAlignment.center,
                             children: [
-                              pw.Text(isSettled ? 'خالص' : (isCreditor ? 'له' : 'عليه'), style: pw.TextStyle(font: arabicFontBold, fontSize: 11, color: isSettled ? PdfColors.grey : (isCreditor ? greenColor : redColor))),
+                              pw.Text(isSettled ? 'خالص'.tr() : (isCreditor ? 'له'.tr() : 'عليه'.tr()), style: pw.TextStyle(font: arabicFontBold, fontSize: 11, color: isSettled ? PdfColors.grey : (isCreditor ? greenColor : redColor))),
                               pw.SizedBox(width: 4),
                               pw.Container(width: 8, height: 8, decoration: pw.BoxDecoration(shape: pw.BoxShape.circle, color: isSettled ? PdfColors.grey : (isCreditor ? greenColor : redColor))),
                             ]
@@ -536,11 +517,9 @@ class ReportScreen extends StatelessWidget {
 
               pw.SizedBox(height: 24),
 
-              // 4. قسم التسويات والملاحظات 
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  // قسم التسويات (يمين الصفحة)
                   pw.Expanded(
                     child: pw.Container(
                       padding: const pw.EdgeInsets.all(12),
@@ -552,10 +531,10 @@ class ReportScreen extends StatelessWidget {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('اقتراحات التسوية', style: pw.TextStyle(font: arabicFontBold, fontSize: 14, color: greenColor)),
+                          pw.Text('اقتراحات التسوية'.tr(), style: pw.TextStyle(font: arabicFontBold, fontSize: 14, color: greenColor)),
                           pw.SizedBox(height: 10),
                           if (settlements.isEmpty)
-                            pw.Text('لا توجد تسويات مطلوبة.', style: const pw.TextStyle(color: PdfColors.grey))
+                            pw.Text('لا توجد تسويات مطلوبة.'.tr(), style: const pw.TextStyle(color: PdfColors.grey))
                           else
                             ...settlements.map((s) => pw.Container(
                               margin: const pw.EdgeInsets.only(bottom: 8),
@@ -565,7 +544,7 @@ class ReportScreen extends StatelessWidget {
                                   pw.Text(s['from'], style: pw.TextStyle(font: arabicFontBold)),
                                   pw.Column(
                                     children: [
-                                      pw.Text('يدفع إلى', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey)),
+                                      pw.Text('يدفع إلى'.tr(), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey)),
                                       pw.Text('${s['amount'].toStringAsFixed(2)}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 10)),
                                     ]
                                   ),
@@ -578,7 +557,6 @@ class ReportScreen extends StatelessWidget {
                     )
                   ),
                   pw.SizedBox(width: 16),
-                  // قسم الملاحظات (يسار الصفحة)
                   pw.Expanded(
                     child: pw.Container(
                       padding: const pw.EdgeInsets.all(12),
@@ -590,12 +568,12 @@ class ReportScreen extends StatelessWidget {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('ملاحظات', style: pw.TextStyle(font: arabicFontBold, fontSize: 14, color: darkBlueColor)),
+                          pw.Text('ملاحظات'.tr(), style: pw.TextStyle(font: arabicFontBold, fontSize: 14, color: darkBlueColor)),
                           pw.SizedBox(height: 10),
-                          _pdfNoteItem('جميع المبالغ محسوبة بناءً على إجمالي المصروفات.', darkBlueColor),
-                          _pdfNoteItem('الأرصدة الموجبة (له) تعني أن الشخص يستحق مبلغاً.', darkBlueColor),
-                          _pdfNoteItem('الأرصدة السالبة (عليه) تعني أن الشخص مدين بمبلغ.', darkBlueColor),
-                          _pdfNoteItem('يمكنك مشاركة هذا التقرير كملف PDF مع الأعضاء.', darkBlueColor),
+                          _pdfNoteItem('جميع المبالغ محسوبة بناءً على إجمالي المصروفات.'.tr(), darkBlueColor),
+                          _pdfNoteItem('الأرصدة الموجبة (له) تعني أن الشخص يستحق مبلغاً.'.tr(), darkBlueColor),
+                          _pdfNoteItem('الأرصدة السالبة (عليه) تعني أن الشخص مدين بمبلغ.'.tr(), darkBlueColor),
+                          _pdfNoteItem('يمكنك مشاركة هذا التقرير كملف PDF مع الأعضاء.'.tr(), darkBlueColor),
                         ]
                       )
                     )
@@ -610,16 +588,15 @@ class ReportScreen extends StatelessWidget {
       final bytes = await pdf.save();
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'تقرير_قسمة_${provider.groupName}.pdf',
+        filename: '${'تقرير_قسمة_'.tr()}${provider.groupName.tr()}.pdf',
       );
 
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('حدث خطأ أثناء إعداد الـ PDF: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'حدث خطأ أثناء إعداد الـ PDF: '.tr()}$e')));
     }
   }
 
-  // دوال مساعدة لرسم عناصر الـ PDF الداخلية
   pw.Widget _buildPdfStatCard(String title, String value, String subtitle, pw.Font fontBold, PdfColor color) {
     return pw.Container(
       width: 100,
@@ -656,7 +633,7 @@ class ReportScreen extends StatelessWidget {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Container(
-            margin: const pw.EdgeInsets.only(top: 3, left: 6),
+            margin: const pw.EdgeInsets.only(top: 3, left: 6, right: 6),
             width: 6, height: 6, 
             decoration: pw.BoxDecoration(shape: pw.BoxShape.circle, color: color)
           ),
@@ -666,7 +643,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -676,18 +653,18 @@ class ReportScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('تطبيق قسمة للمصروفات', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-              Text('Qisma Expenses v1.0', style: TextStyle(color: Colors.white70, fontSize: 9)),
+              Text('تطبيق قسمة للمصروفات'.tr(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              const Text('Qisma Expenses v1.0', style: TextStyle(color: Colors.white70, fontSize: 9)),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('تم الإنشاء', style: TextStyle(color: Colors.white, fontSize: 11)),
-              Text(DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now()), style: const TextStyle(color: Colors.white70, fontSize: 9)),
+              Text('تم الإنشاء'.tr(), style: const TextStyle(color: Colors.white, fontSize: 11)),
+              Text(DateFormat('dd-MM-yyyy hh:mm a', context.locale.languageCode).format(DateTime.now()), style: const TextStyle(color: Colors.white70, fontSize: 9)),
             ],
           )
         ],

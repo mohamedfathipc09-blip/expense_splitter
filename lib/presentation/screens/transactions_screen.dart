@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart'; // 🔹 إضافة مكتبة الترجمة
 import '../providers/expense_provider.dart';
 
 class TransactionsScreen extends StatelessWidget {
@@ -23,11 +23,11 @@ class TransactionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('سجل العمليات', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('سجل العمليات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: expenses.isEmpty
-          ? const Center(child: Text('لا توجد عمليات مسجلة حتى الآن.', style: TextStyle(fontSize: 16)))
+          ? Center(child: Text('لا توجد عمليات مسجلة حتى الآن.'.tr(), style: const TextStyle(fontSize: 16)))
           : ListView.builder(
               padding: const EdgeInsets.all(16.0),
               physics: const BouncingScrollPhysics(),
@@ -45,13 +45,14 @@ class TransactionsScreen extends StatelessWidget {
                       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                       child: Icon(_getCategoryIcon(expense.category), color: Theme.of(context).colorScheme.onPrimaryContainer),
                     ),
-                    title: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.bold)), // الاسم لا يترجم
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
-                      child: Text('${expense.category} • دفع: ${expense.payer}\n${DateFormat('d MMMM yyyy', 'ar').format(expense.date)}'),
+                      // 🔹 ترجمة التصنيف، وكلمة دفع، وضبط لغة التاريخ
+                      child: Text('${expense.category.tr()} • ${'دفع:'.tr()} ${expense.payer}\n${DateFormat('d MMMM yyyy', context.locale.languageCode).format(expense.date)}'),
                     ),
                     trailing: Text(
-                      '${expense.amount.toStringAsFixed(0)} ${provider.currency}',
+                      '${expense.amount.toStringAsFixed(0)} ${provider.currency.tr()}', // 🔹 ترجمة العملة
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),

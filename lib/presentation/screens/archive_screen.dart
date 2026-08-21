@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart'; // 🔹 إضافة مكتبة الترجمة
 import '../providers/expense_provider.dart';
 
 class ArchiveScreen extends StatelessWidget {
@@ -10,13 +10,13 @@ class ArchiveScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('أرشيف المخالصات'),
+        title: Text('أرشيف المخالصات'.tr()),
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
           if (provider.archives.isEmpty) {
-            return const Center(
-              child: Text('لا يوجد أرشيف للمخالصات السابقة.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            return Center(
+              child: Text('لا يوجد أرشيف للمخالصات السابقة.'.tr(), style: const TextStyle(fontSize: 16, color: Colors.grey)),
             );
           }
           
@@ -26,7 +26,7 @@ class ArchiveScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final archive = provider.archives[index] as Map<dynamic, dynamic>;
               
-              final String title = archive['title'] ?? 'دورة سابقة';
+              final String title = archive['title'] ?? 'دورة سابقة'.tr();
               final DateTime date = archive['date'] != null ? DateTime.parse(archive['date']) : DateTime.now();
               final double totalAmount = archive['totalAmount'] ?? 0.0;
               final List<dynamic> expensesList = archive['expensesList'] ?? [];
@@ -49,7 +49,7 @@ class ArchiveScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold)
                   ),
                   subtitle: Text(
-                    '${DateFormat('yyyy-MM-dd').format(date)} • إجمالي: ${totalAmount.toStringAsFixed(2)} ${provider.currency}',
+                    '${DateFormat('yyyy-MM-dd', context.locale.languageCode).format(date)} • ${'إجمالي:'.tr()} ${totalAmount.toStringAsFixed(2)} ${provider.currency.tr()}',
                     style: TextStyle(color: Colors.grey.shade700),
                   ),
                   children: [
@@ -58,17 +58,17 @@ class ArchiveScreen extends StatelessWidget {
                     // ==============================
                     // 1. قسم التسويات النهائية
                     // ==============================
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text('💰 التسويات (من يدفع لمن):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text('💰 ${'التسويات (من يدفع لمن):'.tr()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.teal)),
                       ),
                     ),
                     if (settlementSummary.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text('الكل خالص، لا توجد ديون مسجلة.', style: TextStyle(color: Colors.grey)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text('الكل خالص، لا توجد ديون مسجلة.'.tr(), style: const TextStyle(color: Colors.grey)),
                       )
                     else
                       ...settlementSummary.map((line) => ListTile(
@@ -82,18 +82,18 @@ class ArchiveScreen extends StatelessWidget {
                     // ==============================
                     // 2. قسم تفاصيل العمليات
                     // ==============================
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text('🧾 تفاصيل المصروفات:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueAccent)),
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text('🧾 ${'تفاصيل المصروفات:'.tr()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueAccent)),
                       ),
                     ),
                     
                     if (expensesList.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text('لا توجد عمليات مسجلة في هذه الدورة.', style: TextStyle(color: Colors.grey)),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text('لا توجد عمليات مسجلة في هذه الدورة.'.tr(), style: const TextStyle(color: Colors.grey)),
                       )
                     else
                       ...expensesList.map((expenseItem) {
@@ -107,10 +107,10 @@ class ArchiveScreen extends StatelessWidget {
                             backgroundColor: Colors.black12,
                             child: Icon(Icons.receipt_long, size: 18, color: Colors.black54),
                           ),
-                          title: Text(exp['title'] ?? 'بدون عنوان', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('الدفع: ${exp['payer']} • ${DateFormat('yyyy-MM-dd').format(expDate)}'),
+                          title: Text(exp['title'] ?? 'بدون عنوان'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('${'الدفع:'.tr()} ${exp['payer']} • ${DateFormat('yyyy-MM-dd', context.locale.languageCode).format(expDate)}'),
                           trailing: Text(
-                            '${exp['amount']} ${provider.currency}', 
+                            '${exp['amount']} ${provider.currency.tr()}', 
                             style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 14)
                           ),
                         );

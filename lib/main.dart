@@ -14,7 +14,9 @@ void main() async {
   
   await EasyLocalization.ensureInitialized(); // 🔹 2. تهيئة مكتبة الترجمة قبل التشغيل
   
+  // 🔹 التعديل الأول: تهيئة التاريخ للغتين لضمان عدم حدوث أخطاء عند التبديل
   await initializeDateFormatting('ar', null);
+  await initializeDateFormatting('en', null);
 
   await Hive.initFlutter();
   
@@ -48,7 +50,8 @@ class MyApp extends StatelessWidget {
       child: Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
           return MaterialApp(
-            title: 'قسمة المصاريف',
+            // 🔹 التعديل الثاني: استخدام onGenerateTitle لترجمة اسم التطبيق ديناميكياً
+            onGenerateTitle: (context) => 'قسمة المصاريف'.tr(),
             debugShowCheckedModeBanner: false,
             
             // 🔹 4. ربط إعدادات اللغة بالتطبيق (هذا ما سيقلب الاتجاهات RTL/LTR)
