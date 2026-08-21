@@ -8,6 +8,7 @@ import 'settlement_screen.dart';
 import 'add_expense_screen.dart';
 import 'persons_management_screen.dart';
 import 'transactions_screen.dart';
+import 'privacy_policy_screen.dart'; // 🔹 استدعاء شاشة سياسة الخصوصية الجديدة
 import '../providers/expense_provider.dart';
 
 // ==========================================
@@ -23,6 +24,47 @@ class QesmaDashboardScreen extends StatefulWidget {
 class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
   int _currentIndex = 0;
 
+  // 🔹 نافذة تواصل معنا
+  void _showContactUs(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.email, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text('تواصل معنا'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.mail_outline, color: Colors.redAccent),
+              title: const Text('mohamedfathipc09@gmail.com'), // ✏️ يمكنك تعديل الإيميل هنا
+              onTap: () {}, 
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.language, color: Colors.blueGrey),
+              title: const Text(''),
+              subtitle: const Text('GitHub'),
+              onTap: () {}, 
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('إغلاق'.tr(), style: const TextStyle(color: Colors.blue)),
+          )
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ExpenseProvider>();
@@ -31,32 +73,88 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       endDrawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: theme.colorScheme.primary),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
-                  const Icon(Icons.account_balance_wallet, color: Colors.white, size: 48),
-                  const SizedBox(height: 12),
-                  Text('قسمة المصاريف'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  DrawerHeader(
+                    decoration: BoxDecoration(color: theme.colorScheme.primary),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Icon(Icons.account_balance_wallet, color: Colors.white, size: 48),
+                        const SizedBox(height: 12),
+                        Text('قسمة المصاريف'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_outlined, color: Colors.black87),
+                    title: Text('الإعدادات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onTap: () {
+                      Navigator.pop(context); 
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      );
+                    },
+                  ),
+                  const Divider(),
+                  // 🔹 زر سياسة الخصوصية الجديد
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined, color: Colors.black87),
+                    title: Text('سياسة الخصوصية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen())
+                      );
+                    },
+                  ),
+                  // 🔹 زر تواصل معنا
+                  ListTile(
+                    leading: const Icon(Icons.email_outlined, color: Colors.black87),
+                    title: Text('تواصل معنا'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showContactUs(context);
+                    },
+                  ),
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined, color: Colors.black87),
-              title: Text('الإعدادات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context); 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                );
-              },
-            ),
+            // ==========================================
+            // 🔹 توقيع المطور (احترافي باللغة الإنجليزية)
+            // ==========================================
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              alignment: Alignment.center,
+              child: Column(
+                children: [
+                  Text('Qesma Expenses'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                  const SizedBox(height: 4),
+                  Text('Version 1.0.0'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.code, color: Colors.teal, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Developed by'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Mohamed Fathi', 
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal, letterSpacing: 0.5)
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            )
           ],
         ),
       ),
@@ -76,7 +174,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
         elevation: 0,
         backgroundColor: theme.colorScheme.surfaceContainerLowest,
         indicatorColor: theme.colorScheme.primaryContainer,
-        // 🔹 أزلنا الـ const من هنا لكي تتحدث أسماء القوائم
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: 'الرئيسية'.tr()),
           NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long), label: 'العمليات'.tr()),
@@ -87,9 +184,8 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 🔹 أزلنا الـ const من جميع المكونات لكي تستجيب لتغيير اللغة
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(child: _HeaderSection()), 
+            SliverToBoxAdapter(child: _HeaderSection(provider: provider)), 
             SliverPadding(
               padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
               sliver: SliverList(
@@ -123,6 +219,9 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
 // 2. HEADER SECTION
 // ==========================================
 class _HeaderSection extends StatelessWidget {
+  final ExpenseProvider provider;
+  const _HeaderSection({required this.provider});
+
   @override
   Widget build(BuildContext context) {
     return FadeInSlide(
@@ -145,7 +244,7 @@ class _HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'المجموعة الحالية'.tr(), 
+                    provider.groupName.tr(), 
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   Text(
@@ -265,7 +364,7 @@ class _MainCardsSection extends StatelessWidget {
                     const SizedBox(height: 12),
                     FittedBox(
                       child: Text(
-                        '${totalExpenses.toStringAsFixed(0)} ${provider.currency.tr()}', // 🔹 ترجمة العملة أيضاً
+                        '${totalExpenses.toStringAsFixed(0)} ${provider.currency.tr()}', 
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
