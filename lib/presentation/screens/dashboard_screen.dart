@@ -22,9 +22,9 @@ class QesmaDashboardScreen extends StatefulWidget {
 }
 
 class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
-  int _currentIndex = 1;
+  final int _currentIndex = 1; // 1 = الرئيسية
 
-  // 🔹 نافذة الإشعارات الاحترافية (Bottom Sheet)
+  // 🔹 نافذة الإشعارات (Bottom Sheet الأصلية)
   void _showNotificationsPopup(BuildContext context, ExpenseProvider provider) {
     final alerts = provider.smartAlerts;
     
@@ -44,7 +44,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            // خط السحب الصغير في الأعلى
             Container(
               width: 40, 
               height: 5, 
@@ -168,7 +167,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                     onTap: () async {
                       Navigator.pop(context); 
                       final Uri emailUri = Uri.parse("mailto:mohamedfathipc09@gmail.com?subject=تطبيق قسمة المصاريف");
-                      
                       try {
                         await launchUrl(emailUri, mode: LaunchMode.externalApplication);
                       } catch (e) {
@@ -210,34 +208,48 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          if (index == 1) return; 
-
-          if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
-          }
-          else if (index == 2) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
-          }
-          setState(() => _currentIndex = 1); 
+      
+      // 🔹 1. إضافة زر الإضافة في المنتصف
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
         },
-        elevation: 0,
-        backgroundColor: theme.colorScheme.surfaceContainerLowest,
-        indicatorColor: theme.colorScheme.primaryContainer,
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long), label: 'العمليات'.tr()),
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: 'الرئيسية'.tr()),
-          NavigationDestination(icon: const Icon(Icons.pie_chart_outline), selectedIcon: const Icon(Icons.pie_chart), label: 'الإحصائيات'.tr()),
-        ],
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        shape: const CircleBorder(),
+        elevation: 4,
+        child: const Icon(Icons.add, size: 28),
       ),
+
+      // 🔹 2. تحويل شريط التنقل السفلي ليدعم التفريغ الدائري (Notch)
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        color: theme.colorScheme.surfaceContainerLowest,
+        elevation: 12,
+        child: SizedBox(
+          height: 65,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'الرئيسية'.tr(), index: 1, context: context),
+              _buildNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'العمليات'.tr(), index: 0, context: context),
+              
+              const SizedBox(width: 48), // 🔹 مساحة فارغة للزر العائم في المنتصف
+              
+              _buildNavItem(icon: Icons.pie_chart_outline, activeIcon: Icons.pie_chart, label: 'الإحصائيات'.tr(), index: 2, context: context),
+              _buildNavItem(icon: Icons.picture_as_pdf_outlined, activeIcon: Icons.picture_as_pdf, label: 'التقارير'.tr(), index: 3, context: context),
+            ],
+          ),
+        ),
+      ),
+      
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            // 🔹 تمرير الدالة للـ Header لكي يفتح النافذة
             SliverToBoxAdapter(child: _HeaderSection(provider: provider, onNotificationTap: () => _showNotificationsPopup(context, provider))), 
             SliverPadding(
               padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
@@ -248,7 +260,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                   const SizedBox(height: 24),
                   _StatisticsGridSection(provider: provider),
                   const SizedBox(height: 24),
-                  _QuickActionsSection(), 
+                  _QuickActionsSection(), // 🔹 الإجراءات السريعة (بدون إضافة)
                   const SizedBox(height: 24),
                   _SmartAlertsSection(provider: provider),
                   const SizedBox(height: 24),
@@ -266,6 +278,46 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
       ),
     );
   }
+
+  // 🔹 دالة مساعدة لإنشاء أيقونات الشريط السفلي وتوجيهها بشكل صحيح
+  Widget _buildNavItem({required IconData icon, required IconData activeIcon, required String label, required int index, required BuildContext context}) {
+    final theme = Theme.of(context);
+    bool isSelected = _currentIndex == index;
+    return InkWell(
+      onTap: () {
+        if (index == 1) return; // نحن في الرئيسية بالفعل
+        if (index == 0) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
+        } else if (index == 2 || index == 3) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
+        }
+      },
+      borderRadius: BorderRadius.circular(50),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? activeIcon : icon, 
+              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              size: 24,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label, 
+              style: TextStyle(
+                fontSize: 10, 
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              )
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ==========================================
@@ -273,13 +325,13 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
 // ==========================================
 class _HeaderSection extends StatelessWidget {
   final ExpenseProvider provider;
-  final VoidCallback onNotificationTap; // 🔹 دالة فتح الإشعارات
+  final VoidCallback onNotificationTap; 
   
   const _HeaderSection({required this.provider, required this.onNotificationTap});
 
   @override
   Widget build(BuildContext context) {
-    final alertsCount = provider.smartAlerts.length; // حساب عدد الإشعارات
+    final alertsCount = provider.smartAlerts.length; 
 
     return FadeInSlide(
       delay: 0,
@@ -313,15 +365,14 @@ class _HeaderSection extends StatelessWidget {
                 ],
               ),
             ),
-            // 🔹 زر الإشعارات مع الرقم (Badge)
             IconButton(
               icon: Badge(
-                isLabelVisible: alertsCount > 0, // يظهر فقط لو في إشعارات
+                isLabelVisible: alertsCount > 0, 
                 label: Text('$alertsCount'),
                 backgroundColor: Colors.redAccent,
                 child: const Icon(Icons.notifications_outlined)
               ),
-              onPressed: onNotificationTap, // يفتح النافذة المنبثقة
+              onPressed: onNotificationTap, 
             ),
             IconButton(
               icon: const Icon(Icons.menu), 
@@ -337,7 +388,7 @@ class _HeaderSection extends StatelessWidget {
 }
 
 // ==========================================
-// 3. MAIN CARDS
+// 3. MAIN CARDS (الكروت الأصلية)
 // ==========================================
 class _MainCardsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -589,8 +640,8 @@ class _StatisticsGridSection extends StatelessWidget {
             runSpacing: 12,
             children: [
               _StatCard(width: width, title: 'الأشخاص'.tr(), value: '$personsCount', icon: Icons.group, color: Colors.blue),
-              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt, color: Colors.orange),
-              _StatCard(width: width, title: 'متوسط العملية'.tr(), value: '${average.toStringAsFixed(0)} ${provider.currency.tr()}', icon: Icons.calculate, color: Colors.purple),
+              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt_long, color: Colors.orange),
+              _StatCard(width: width, title: 'المتوسط'.tr(), value: average.toStringAsFixed(0), icon: Icons.calculate, color: Colors.purple),
               _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month, color: Colors.teal),
             ],
           );
@@ -644,7 +695,7 @@ class _StatCard extends StatelessWidget {
 }
 
 // ==========================================
-// 5. QUICK ACTIONS
+// 5. QUICK ACTIONS (تم إزالة الإضافة)
 // ==========================================
 class _QuickActionsSection extends StatelessWidget {
   @override
@@ -659,9 +710,7 @@ class _QuickActionsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ActionItem(icon: Icons.add, label: 'إضافة'.tr(), isPrimary: true, onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
-              }),
+              // 🔹 تم إزالة زر "إضافة" من هنا
               _ActionItem(icon: Icons.people_alt_outlined, label: 'الأشخاص'.tr(), onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonsManagementScreen()));
               }),
@@ -682,20 +731,19 @@ class _QuickActionsSection extends StatelessWidget {
 class _ActionItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool isPrimary;
   final VoidCallback onTap;
 
-  const _ActionItem({required this.icon, required this.label, this.isPrimary = false, required this.onTap});
+  const _ActionItem({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16), // زيادة المسافة بعد إزالة الزر الرابع
       child: Column(
         children: [
           Material(
-            color: isPrimary ? colorScheme.primary : colorScheme.surfaceContainerHigh,
+            color: colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -704,7 +752,7 @@ class _ActionItem extends StatelessWidget {
                 width: 60,
                 height: 60,
                 alignment: Alignment.center,
-                child: Icon(icon, color: isPrimary ? colorScheme.onPrimary : colorScheme.onSurface),
+                child: Icon(icon, color: colorScheme.onSurface),
               ),
             ),
           ),

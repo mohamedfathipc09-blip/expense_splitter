@@ -7,10 +7,11 @@ class ExpenseProvider with ChangeNotifier {
   List<String> _persons = [];
   String? _searchPersonQuery;
 
+  // 🔹 قائمة لحفظ الإشعارات التي تم إخفاؤها/قراءتها مؤقتاً
+final List<String> _dismissedAlerts = [];
   // ==========================================
   // 1. الميزات المستعادة (العملة، الوضع الليلي، الأرشيف)
   // ==========================================
-  
   bool get isDarkMode {
     final box = Hive.box('settingsBox');
     return box.get('isDarkMode', defaultValue: false);
@@ -82,6 +83,7 @@ class ExpenseProvider with ChangeNotifier {
     final box = Hive.box<ExpenseModel>('expenses');
     await box.put(expense.id, expense);
     _expenses.add(expense);
+    _dismissedAlerts.clear(); // تصفير الإشعارات المقروءة عند إضافة عملية جديدة
     notifyListeners();
   }
 
@@ -107,6 +109,7 @@ class ExpenseProvider with ChangeNotifier {
       final personBox = Hive.box<String>('persons');
       await personBox.add(name);
       _persons.add(name);
+      _dismissedAlerts.clear();
       notifyListeners();
     }
   }
@@ -223,72 +226,75 @@ class ExpenseProvider with ChangeNotifier {
     final box = Hive.box<ExpenseModel>('expenses');
     await box.clear();
     _expenses.clear();
+    _dismissedAlerts.clear();
 
     notifyListeners();
   }
 
   // ==========================================
-  // 4. محرك التنبيهات الذكية (محدث ليدعم 50% و 100% للميزانية)
+  // 4. محرك التنبيهات الذكية (تم تحديثه)
   // ==========================================
-  List<Map<String, dynamic>> get smartAlerts {
+  void dismissAlert(String title) {
+    if (!_dismissedAlerts.contains(title)) {
+      _dismissedAlerts.add(title);
+      notifyListeners();
+    }
+  }
+
+  void clearAllAlerts() {
+    final currentAlerts = _generateRawAlerts();
+    for (var alert in currentAlerts) {
+      if (!_dismissedAlerts.contains(alert['title'])) {
+        _dismissedAlerts.add(alert['title']);
+      }
+    }
+    notifyListeners();
+  }
+
+  List<Map<String, dynamic>> _generateRawAlerts() {
     List<Map<String, dynamic>> alerts = [];
     
     if (_persons.isEmpty) {
-      return [{'title': 'أهلاً بك!', 'subtitle': 'ابدأ بإضافة الأشخاص.', 'icon': Icons.group_add, 'color': Colors.blue}];
+      alerts.add({'title': 'أهلاً بك!', 'subtitle': 'ابدأ بإضافة الأشخاص.', 'icon': Icons.group_add, 'color': Colors.blue});
+      return alerts;
     }
     if (_expenses.isEmpty) {
-      return [{'title': 'المجموعة جاهزة!', 'subtitle': 'أضف أول مصروف.', 'icon': Icons.receipt_long, 'color': Colors.teal}];
+      alerts.add({'title': 'المجموعة جاهزة!', 'subtitle': 'أضف أول مصروف.', 'icon': Icons.receipt_long, 'color': Colors.teal});
     }
 
-    // 🔹 تنبيهات الميزانية المستهدفة (50% و 100%)
     double totalExpenses = _expenses.fold(0.0, (sum, item) => sum + item.amount);
     if (targetBudget > 0) {
       double percentage = totalExpenses / targetBudget;
       if (percentage >= 1.0) {
-        alerts.add({
-          'title': 'تجاوزت الميزانية!',
-          'subtitle': 'لقد استهلكت 100% من الميزانية المحددة.',
-          'icon': Icons.warning_rounded,
-          'color': Colors.red
-        });
+        alerts.add({'title': 'تجاوزت الميزانية!', 'subtitle': 'لقد استهلكت 100% من الميزانية المحددة.', 'icon': Icons.warning_rounded, 'color': Colors.red});
       } else if (percentage >= 0.5) {
-        alerts.add({
-          'title': 'نصف الميزانية!',
-          'subtitle': 'لقد استهلكت أكثر من 50% من الميزانية المحددة.',
-          'icon': Icons.pie_chart,
-          'color': Colors.orange
-        });
+        alerts.add({'title': 'نصف الميزانية!', 'subtitle': 'لقد استهلكت أكثر من 50% من الميزانية المحددة.', 'icon': Icons.pie_chart, 'color': Colors.orange});
       }
     }
 
-    // 🔹 تنبيهات الأشخاص الذين لم يدفعوا
     for (var person in _persons) {
       if (!_expenses.any((e) => e.payer == person)) {
-        alerts.add({
-          'title': '$person لم يقم بأي دفع!',
-          'subtitle': 'تأكد من مشاركة المصروفات.',
-          'icon': Icons.info_outline,
-          'color': Colors.blueGrey
-        });
+        alerts.add({'title': '$person لم يقم بأي دفع!', 'subtitle': 'تأكد من مشاركة المصروفات.', 'icon': Icons.info_outline, 'color': Colors.blueGrey});
       }
     }
 
-    // 🔹 تنبيهات أيام المخالصة
+    if (settlementTransactions.isNotEmpty && _expenses.isNotEmpty) {
+       alerts.add({'title': 'اقتراح تسوية جاهز', 'subtitle': 'يمكنك الآن تسوية حسابات المجموعة.', 'icon': Icons.handshake, 'color': Colors.green});
+    }
+
     if (_expenses.isNotEmpty) {
       List<ExpenseModel> sortedExpenses = List.from(_expenses);
       sortedExpenses.sort((a, b) => b.date.compareTo(a.date));
       final difference = DateTime.now().difference(sortedExpenses.first.date).inDays;
       if (difference >= 7) {
-        alerts.add({
-          'title': 'لم تتم المخالصة منذ فترة!',
-          'subtitle': 'آخر عملية كانت منذ $difference أيام.',
-          'icon': Icons.event_busy,
-          'color': Colors.orange
-        });
+        alerts.add({'title': 'لم تتم المخالصة منذ فترة!', 'subtitle': 'آخر عملية كانت منذ $difference أيام.', 'icon': Icons.event_busy, 'color': Colors.deepOrange});
       }
     }
-    
     return alerts;
+  }
+
+  List<Map<String, dynamic>> get smartAlerts {
+    return _generateRawAlerts().where((alert) => !_dismissedAlerts.contains(alert['title'])).toList();
   }
 
   // ==========================================
