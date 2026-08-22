@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_localization/easy_localization.dart'; // 🔹 مكتبة الترجمة
+import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:typed_data';
 
-// المكتبات الخاصة بإنشاء ومشاركة الـ PDF
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -71,7 +70,7 @@ class ReportScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _buildAccountsTable(provider.persons, paidAmounts, sharePerPerson, balances),
+                    _buildPerfectTable(provider.persons, paidAmounts, sharePerPerson, balances),
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -154,7 +153,6 @@ class ReportScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _infoItem(Icons.calendar_today, DateFormat('dd-MM-yyyy', context.locale.languageCode).format(DateTime.now())),
-                // 🔹 ترجمة اسم المجموعة
                 _infoItem(Icons.groups, provider.groupName.tr()),
                 _infoItem(Icons.payments, provider.currency.tr()),
               ],
@@ -222,54 +220,113 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountsTable(List<String> persons, Map<String, double> paid, double share, Map<String, double> balances) {
+  Widget _buildPerfectTable(List<String> persons, Map<String, double> paid, double share, Map<String, double> balances) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF005C53), width: 1.5),
         ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0xFF005C53)),
-            columnSpacing: 20,
-            columns: [
-              DataColumn(label: Text('الشخص'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('ما دفعه'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('نصيبه المفترض'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('الرصيد النهائي'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              DataColumn(label: Text('الحالة'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-            ],
-            rows: persons.map((person) {
+        clipBehavior: Clip.antiAlias,
+        child: Table(
+          border: TableBorder.symmetric(
+            inside: BorderSide(color: Colors.grey.shade300, width: 1),
+          ),
+          columnWidths: const {
+            0: FlexColumnWidth(2.5), 
+            1: FlexColumnWidth(2.0), 
+            2: FlexColumnWidth(2.0), 
+            3: FlexColumnWidth(2.2), 
+            4: FlexColumnWidth(1.8), 
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            TableRow(
+              decoration: const BoxDecoration(color: Color(0xFF005C53)),
+              children: [
+                _tableHeaderCell('الشخص'.tr()),
+                _tableHeaderCell('ما دفعه'.tr()),
+                _tableHeaderCell('نصيبه'.tr()),
+                _tableHeaderCell('الرصيد'.tr()),
+                _tableHeaderCell('الحالة'.tr()),
+              ],
+            ),
+            ...persons.map((person) {
               double bal = balances[person] ?? 0.0;
               bool isCreditor = bal > 0.01;
               bool isSettled = bal.abs() <= 0.01;
 
-              return DataRow(
-                cells: [
-                  DataCell(Row(children: [const Icon(Icons.account_circle, color: Colors.teal, size: 18), const SizedBox(width: 4), Text(person, style: const TextStyle(fontWeight: FontWeight.bold))])),
-                  DataCell(Text((paid[person] ?? 0.0).toStringAsFixed(2))),
-                  DataCell(Text(share.toStringAsFixed(2))),
-                  DataCell(Text(
-                    isSettled ? '0.00' : '${bal > 0 ? '+' : ''}${bal.toStringAsFixed(2)}',
-                    style: TextStyle(color: isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red), fontWeight: FontWeight.bold),
-                  )),
-                  DataCell(Row(
-                    children: [
-                      Icon(isSettled ? Icons.check_circle : (isCreditor ? Icons.arrow_circle_up : Icons.arrow_circle_down),
-                          color: isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red), size: 16),
-                      const SizedBox(width: 4),
-                      Text(isSettled ? 'خالص'.tr() : (isCreditor ? 'له'.tr() : 'عليه'.tr()),
-                          style: TextStyle(color: isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red), fontWeight: FontWeight.bold, fontSize: 12)),
-                    ],
-                  )),
+              return TableRow(
+                decoration: const BoxDecoration(color: Colors.white),
+                children: [
+                  _tableDataCell(person, isBold: true),
+                  _tableDataCell((paid[person] ?? 0.0).toStringAsFixed(0)),
+                  _tableDataCell(share.toStringAsFixed(0)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    child: Text(
+                      isSettled ? '0' : '${bal > 0 ? '+' : ''}${bal.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        color: isSettled ? Colors.grey.shade600 : (isCreditor ? Colors.green.shade700 : Colors.red.shade700),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red)).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isSettled ? 'خالص'.tr() : (isCreditor ? 'له'.tr() : 'عليه'.tr()),
+                          style: TextStyle(
+                            color: isSettled ? Colors.grey.shade700 : (isCreditor ? Colors.green.shade700 : Colors.red.shade700),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
-            }).toList(),
-          ),
+            }),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _tableHeaderCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _tableDataCell(String text, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+          fontSize: 13,
+          color: Colors.black87,
+        ),
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -358,7 +415,6 @@ class ReportScreen extends StatelessWidget {
   }
 
   Future<void> _generateAndSharePDF(BuildContext context, ExpenseProvider provider, double totalExpenses, double share, Map<String, double> paidAmounts, Map<String, double> balances, List<Map<String, dynamic>> settlements, int totalTransactions) async {
-    // 🔹 استخراج اللغة قبل أي عملية await لتفادي خطأ الـ Context
     final String currentLang = context.locale.languageCode;
     final bool isArabic = currentLang == 'ar';
     
@@ -387,7 +443,6 @@ class ReportScreen extends StatelessWidget {
       final greenColor = PdfColor.fromHex('#388E3C');
       final lightGrey = PdfColor.fromHex('#F8F9FA');
       
-      // 🔹 تحديد اتجاه الـ PDF حسب لغة التطبيق
       final pdfTextDirection = isArabic ? pw.TextDirection.rtl : pw.TextDirection.ltr;
       
       pdf.addPage(

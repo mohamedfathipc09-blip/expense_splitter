@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../data/models/expense_model.dart';
-
+import 'package:easy_localization/easy_localization.dart';
 class ExpenseProvider with ChangeNotifier {
   List<ExpenseModel> _expenses = [];
   List<String> _persons = [];
@@ -273,13 +273,25 @@ final List<String> _dismissedAlerts = [];
     }
 
     for (var person in _persons) {
-      if (!_expenses.any((e) => e.payer == person)) {
-        alerts.add({'title': '$person لم يقم بأي دفع!', 'subtitle': 'تأكد من مشاركة المصروفات.', 'icon': Icons.info_outline, 'color': Colors.blueGrey});
+     if (!_expenses.any((e) => e.payer == person)) {
+      alerts.add({
+        // 🔹 دمج اسم الشخص مع الجملة المترجمة
+        'title': '$person ${'لم يقم بأي دفع!'.tr()}', 
+        'subtitle': 'تأكد من مشاركة المصروفات.'.tr(), 
+        'icon': Icons.info_outline, 
+        'color': Colors.blueGrey
+      });
       }
     }
 
     if (settlementTransactions.isNotEmpty && _expenses.isNotEmpty) {
-       alerts.add({'title': 'اقتراح تسوية جاهز', 'subtitle': 'يمكنك الآن تسوية حسابات المجموعة.', 'icon': Icons.handshake, 'color': Colors.green});
+       alerts.add({
+         // 🔹 إضافة .tr() للنصوص
+         'title': 'اقتراح تسوية جاهز'.tr(), 
+         'subtitle': 'يمكنك الآن تسوية حسابات المجموعة.'.tr(), 
+         'icon': Icons.handshake, 
+         'color': Colors.green 
+       });
     }
 
     if (_expenses.isNotEmpty) {

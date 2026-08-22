@@ -9,10 +9,12 @@ import 'add_expense_screen.dart';
 import 'persons_management_screen.dart';
 import 'transactions_screen.dart';
 import 'privacy_policy_screen.dart'; 
+import 'statistics_screen.dart'; 
+import 'notifications_screen.dart'; 
 import '../providers/expense_provider.dart';
 
 // ==========================================
-// 1. MAIN DASHBOARD SCREEN
+// 1. MAIN DASHBOARD SCREEN (شريط سفلي ثابت)
 // ==========================================
 class QesmaDashboardScreen extends StatefulWidget {
   const QesmaDashboardScreen({super.key});
@@ -22,279 +24,29 @@ class QesmaDashboardScreen extends StatefulWidget {
 }
 
 class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
-  final int _currentIndex = 1; // 1 = الرئيسية
+  int _currentIndex = 1; // 1 = الرئيسية
 
-  // 🔹 نافذة الإشعارات (Bottom Sheet الأصلية)
-  void _showNotificationsPopup(BuildContext context, ExpenseProvider provider) {
-    final alerts = provider.smartAlerts;
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.55,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 5)
-          ]
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40, 
-              height: 5, 
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300, 
-                borderRadius: BorderRadius.circular(10)
-              )
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.notifications_active, color: Colors.amber, size: 24),
-                const SizedBox(width: 8),
-                Text('الإشعارات والتنبيهات'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const Divider(height: 30),
-            Expanded(
-              child: alerts.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.notifications_off_outlined, size: 60, color: Colors.grey.shade400),
-                          const SizedBox(height: 16),
-                          Text('لا توجد إشعارات حالياً'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: alerts.length,
-                      itemBuilder: (context, index) {
-                        final alert = alerts[index];
-                        final color = alert['color'] as MaterialColor;
-                        return Card(
-                          elevation: 0,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          color: color.withValues(alpha: 0.08),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: color.withValues(alpha: 0.2), width: 1)
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(12),
-                            leading: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
-                              child: Icon(alert['icon'], color: color.shade700),
-                            ),
-                            title: Text((alert['title'] as String).tr(), style: TextStyle(fontWeight: FontWeight.bold, color: color.shade900, fontSize: 14)),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text((alert['subtitle'] as String).tr(), style: TextStyle(color: color.shade800, fontSize: 12)),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // 🔹 الشاشات الأربعة التي يتم التنقل بينها
+  final List<Widget> _screens = [
+    const TransactionsScreen(), // Index 0
+    const _HomeTab(),           // Index 1 (الرئيسية)
+    const StatisticsScreen(),   // Index 2
+    const ReportScreen(),       // Index 3
+  ];
 
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<ExpenseProvider>();
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      endDrawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  DrawerHeader(
-                    decoration: BoxDecoration(color: theme.colorScheme.primary),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const Icon(Icons.account_balance_wallet, color: Colors.white, size: 48),
-                        const SizedBox(height: 12),
-                        Text('قسمة المصاريف'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.settings_outlined, color: Colors.black87),
-                    title: Text('الإعدادات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      Navigator.pop(context); 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined, color: Colors.black87),
-                    title: Text('سياسة الخصوصية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen())
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.email_outlined, color: Colors.black87),
-                    title: Text('تواصل معنا'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    onTap: () async {
-                      Navigator.pop(context); 
-                      final Uri emailUri = Uri.parse("mailto:mohamedfathipc09@gmail.com?subject=تطبيق قسمة المصاريف");
-                      try {
-                        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت'.tr()))
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              alignment: Alignment.center,
-              child: Column(
-                children: [
-                  const Text('Qesma Expenses', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.blueGrey, letterSpacing: 1.2)),
-                  const SizedBox(height: 4),
-                  const Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.terminal, color: Colors.teal, size: 16),
-                      const SizedBox(width: 6),
-                      const Text('Developed by ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      const Text(
-                        'Mohamed Fathi', 
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal)
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-      
-      // 🔹 1. إضافة زر الإضافة في المنتصف
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
-        },
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: const Icon(Icons.add, size: 28),
-      ),
-
-      // 🔹 2. تحويل شريط التنقل السفلي ليدعم التفريغ الدائري (Notch)
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        color: theme.colorScheme.surfaceContainerLowest,
-        elevation: 12,
-        child: SizedBox(
-          height: 65,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'الرئيسية'.tr(), index: 1, context: context),
-              _buildNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'العمليات'.tr(), index: 0, context: context),
-              
-              const SizedBox(width: 48), // 🔹 مساحة فارغة للزر العائم في المنتصف
-              
-              _buildNavItem(icon: Icons.pie_chart_outline, activeIcon: Icons.pie_chart, label: 'الإحصائيات'.tr(), index: 2, context: context),
-              _buildNavItem(icon: Icons.picture_as_pdf_outlined, activeIcon: Icons.picture_as_pdf, label: 'التقارير'.tr(), index: 3, context: context),
-            ],
-          ),
-        ),
-      ),
-      
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(child: _HeaderSection(provider: provider, onNotificationTap: () => _showNotificationsPopup(context, provider))), 
-            SliverPadding(
-              padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const SizedBox(height: 16),
-                  _MainCardsSection(provider: provider),
-                  const SizedBox(height: 24),
-                  _StatisticsGridSection(provider: provider),
-                  const SizedBox(height: 24),
-                  _QuickActionsSection(), // 🔹 الإجراءات السريعة (بدون إضافة)
-                  const SizedBox(height: 24),
-                  _SmartAlertsSection(provider: provider),
-                  const SizedBox(height: 24),
-                  _SettlementSuggestionSection(provider: provider),
-                  const SizedBox(height: 24),
-                  _RecentTransactionsSection(provider: provider),
-                  const SizedBox(height: 24),
-                  _PeopleBalancesSection(provider: provider),
-                  const SizedBox(height: 40),
-                ]),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 🔹 دالة مساعدة لإنشاء أيقونات الشريط السفلي وتوجيهها بشكل صحيح
+  // 🔹 دالة مساعدة لإنشاء أيقونات الشريط السفلي وتغيير الشاشة
   Widget _buildNavItem({required IconData icon, required IconData activeIcon, required String label, required int index, required BuildContext context}) {
     final theme = Theme.of(context);
     bool isSelected = _currentIndex == index;
     return InkWell(
       onTap: () {
-        if (index == 1) return; // نحن في الرئيسية بالفعل
-        if (index == 0) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionsScreen()));
-        } else if (index == 2 || index == 3) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
-        }
+        setState(() {
+          _currentIndex = index;
+        });
       },
       borderRadius: BorderRadius.circular(50),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -304,7 +56,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
               color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
               size: 24,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               label, 
               style: TextStyle(
@@ -318,10 +70,217 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      endDrawer: _buildDrawer(context, theme),
+      
+      // 🔹 تم استبدال الـ BottomAppBar بـ Container عادي ليكون الزر في نفس المستوى
+      bottomNavigationBar: Container(
+        height: 75,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            )
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'الرئيسية'.tr(), index: 1, context: context),
+            _buildNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'العمليات'.tr(), index: 0, context: context),
+            
+            // 🔹 زر الإضافة الدائري مدمج في نفس مستوى الأيقونات
+            InkWell(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
+              },
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                width: 50,
+                height: 50,
+                margin: const EdgeInsets.only(bottom: 6), // رفعه قليلاً جداً ليتناسق مع النصوص
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                ),
+                child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 28),
+              ),
+            ),
+            
+            _buildNavItem(icon: Icons.pie_chart_outline, activeIcon: Icons.pie_chart, label: 'الإحصائيات'.tr(), index: 2, context: context),
+            _buildNavItem(icon: Icons.picture_as_pdf_outlined, activeIcon: Icons.picture_as_pdf, label: 'التقارير'.tr(), index: 3, context: context),
+          ],
+        ),
+      ),
+      
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
+    );
+  }
+
+  // 🔹 القائمة الجانبية (Drawer)
+  Widget _buildDrawer(BuildContext context, ThemeData theme) {
+    return Drawer(
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                DrawerHeader(
+                  decoration: BoxDecoration(color: theme.colorScheme.primary),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Icon(Icons.account_balance_wallet, color: Colors.white, size: 48),
+                      const SizedBox(height: 12),
+                      Text('قسمة المصاريف'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings_outlined, color: Colors.black87),
+                  title: Text('الإعدادات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(context); 
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined, color: Colors.black87),
+                  title: Text('سياسة الخصوصية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen())
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.email_outlined, color: Colors.black87),
+                  title: Text('تواصل معنا'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  onTap: () async {
+                    Navigator.pop(context); 
+                    final Uri emailUri = Uri.parse("mailto:mohamedfathipc09@gmail.com?subject=تطبيق قسمة المصاريف");
+                    try {
+                      await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت'.tr()))
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                const Text('Qesma Expenses', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.blueGrey, letterSpacing: 1.2)),
+                const SizedBox(height: 4),
+                const Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.terminal, color: Colors.teal, size: 16),
+                    const SizedBox(width: 6),
+                    const Text('Developed by ', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const Text(
+                      'Mohamed Fathi', 
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal)
+                    ),
+                  ],
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
 }
 
 // ==========================================
-// 2. HEADER SECTION
+// 2. HOME TAB (الصفحة الرئيسية)
+// ==========================================
+class _HomeTab extends StatelessWidget {
+  const _HomeTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ExpenseProvider>();
+
+    return SafeArea(
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          SliverToBoxAdapter(child: _HeaderSection(
+            provider: provider, 
+            onNotificationTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen()));
+            }
+          )), 
+          SliverPadding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 16),
+                _MainCardsSection(provider: provider),
+                const SizedBox(height: 24),
+                _StatisticsGridSection(provider: provider),
+                const SizedBox(height: 24),
+                _QuickActionsSection(), 
+                const SizedBox(height: 24),
+                _SmartAlertsSection(provider: provider),
+                const SizedBox(height: 24),
+                _SettlementSuggestionSection(provider: provider),
+                const SizedBox(height: 24),
+                _RecentTransactionsSection(provider: provider),
+                const SizedBox(height: 24),
+                _PeopleBalancesSection(provider: provider),
+                const SizedBox(height: 20),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 3. HEADER SECTION
 // ==========================================
 class _HeaderSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -388,7 +347,7 @@ class _HeaderSection extends StatelessWidget {
 }
 
 // ==========================================
-// 3. MAIN CARDS (الكروت الأصلية)
+// 4. MAIN CARDS
 // ==========================================
 class _MainCardsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -610,7 +569,7 @@ class _MainCardsSection extends StatelessWidget {
 }
 
 // ==========================================
-// 4. STATISTICS GRID
+// 5. STATISTICS GRID
 // ==========================================
 class _StatisticsGridSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -640,8 +599,8 @@ class _StatisticsGridSection extends StatelessWidget {
             runSpacing: 12,
             children: [
               _StatCard(width: width, title: 'الأشخاص'.tr(), value: '$personsCount', icon: Icons.group, color: Colors.blue),
-              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt_long, color: Colors.orange),
-              _StatCard(width: width, title: 'المتوسط'.tr(), value: average.toStringAsFixed(0), icon: Icons.calculate, color: Colors.purple),
+              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt, color: Colors.orange),
+              _StatCard(width: width, title: 'متوسط العملية'.tr(), value: '${average.toStringAsFixed(0)} ${provider.currency.tr()}', icon: Icons.calculate, color: Colors.purple),
               _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month, color: Colors.teal),
             ],
           );
@@ -695,7 +654,7 @@ class _StatCard extends StatelessWidget {
 }
 
 // ==========================================
-// 5. QUICK ACTIONS (تم إزالة الإضافة)
+// 6. QUICK ACTIONS
 // ==========================================
 class _QuickActionsSection extends StatelessWidget {
   @override
@@ -710,7 +669,6 @@ class _QuickActionsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 🔹 تم إزالة زر "إضافة" من هنا
               _ActionItem(icon: Icons.people_alt_outlined, label: 'الأشخاص'.tr(), onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonsManagementScreen()));
               }),
@@ -739,7 +697,7 @@ class _ActionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16), // زيادة المسافة بعد إزالة الزر الرابع
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           Material(
@@ -765,7 +723,7 @@ class _ActionItem extends StatelessWidget {
 }
 
 // ==========================================
-// 6. SMART ALERTS
+// 7. SMART ALERTS
 // ==========================================
 class _SmartAlertsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -848,7 +806,7 @@ class _AlertCard extends StatelessWidget {
 }
 
 // ==========================================
-// 7. SETTLEMENT SUGGESTION
+// 8. SETTLEMENT SUGGESTION
 // ==========================================
 class _SettlementSuggestionSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -907,7 +865,7 @@ class _SettlementSuggestionSection extends StatelessWidget {
 }
 
 // ==========================================
-// 8. RECENT TRANSACTIONS
+// 9. RECENT TRANSACTIONS
 // ==========================================
 class _RecentTransactionsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -971,7 +929,7 @@ class _RecentTransactionsSection extends StatelessWidget {
 }
 
 // ==========================================
-// 9. PEOPLE BALANCES
+// 10. PEOPLE BALANCES
 // ==========================================
 class _PeopleBalancesSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -1052,7 +1010,7 @@ class _PeopleBalancesSection extends StatelessWidget {
 }
 
 // ==========================================
-// 10. REUSABLE COMPONENTS & ANIMATIONS
+// 11. REUSABLE COMPONENTS & ANIMATIONS
 // ==========================================
 class _SectionTitle extends StatelessWidget {
   final String title;
