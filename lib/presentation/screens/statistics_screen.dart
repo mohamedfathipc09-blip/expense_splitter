@@ -97,6 +97,10 @@ class StatisticsScreen extends StatelessWidget {
 
   Widget _buildSummaryHeader(BuildContext context, double total, int count, String currency) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // 🔹 تحديد ما إذا كانت كلمة "عملية" مفرد أم جمع (حسب لغة واجهة المستخدم)
+    String transactionWord = count == 1 ? 'عملية'.tr() : 'عمليات'.tr();
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -112,6 +116,7 @@ class StatisticsScreen extends StatelessWidget {
             children: [
               Text('إجمالي الصرف'.tr(), style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
+              // 🔹 إضافة الترجمة للعملة
               Text('${total.toStringAsFixed(0)} ${currency.tr()}', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
             ],
           ),
@@ -125,7 +130,8 @@ class StatisticsScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.receipt_long, color: Colors.blue),
                 const SizedBox(height: 4),
-                Text('$count ${'عملية'.tr()}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
+                // 🔹 استخدام كلمة المعاملة الصحيحة المترجمة
+                Text('$count $transactionWord', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
               ],
             ),
           )
@@ -203,6 +209,7 @@ class StatisticsScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      // 🔹 إضافة الترجمة للعملة هنا أيضاً
                       Text('${item.value.toStringAsFixed(0)} ${currency.tr()}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
                       Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                     ],

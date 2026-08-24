@@ -723,7 +723,7 @@ class _ActionItem extends StatelessWidget {
 }
 
 // ==========================================
-// 7. SMART ALERTS
+// 7. SMART ALERTS (تم التعديل ليكون آمن تماماً ضد الأخطاء)
 // ==========================================
 class _SmartAlertsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -748,11 +748,18 @@ class _SmartAlertsSection extends StatelessWidget {
               itemCount: alerts.length,
               itemBuilder: (context, index) {
                 final alert = alerts[index];
+                final List<String> args = alert['args'] as List<String>? ?? [];
+                
+                // 🔹 التعديل الجذري: نتحقق من وجود titleKey أو title معاً 🔹
+                // هذا يضمن أن الشاشة ستعمل دائماً، بغض النظر عن نسخة الـ Provider
+                final String finalTitle = (alert['titleKey'] ?? alert['title'] ?? '').toString();
+                final String finalSubtitle = (alert['subtitleKey'] ?? alert['subtitle'] ?? '').toString();
+                
                 return _AlertCard(
-                  icon: alert['icon'] as IconData,
-                  title: (alert['title'] as String).tr(),
-                  subtitle: (alert['subtitle'] as String).tr(),
-                  color: alert['color'] as MaterialColor,
+                  icon: alert['icon'] as IconData? ?? Icons.notifications,
+                  title: finalTitle.tr(args: args),
+                  subtitle: finalSubtitle.tr(args: args),
+                  color: alert['color'] as MaterialColor? ?? Colors.blue,
                 );
               },
             ),
