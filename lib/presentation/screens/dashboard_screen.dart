@@ -13,6 +13,7 @@ import 'privacy_policy_screen.dart';
 import 'statistics_screen.dart'; 
 import 'notifications_screen.dart'; 
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف تنسيق الأرقام
 
 // ==========================================
 // 1. MAIN DASHBOARD SCREEN (شريط سفلي ثابت)
@@ -27,7 +28,6 @@ class QesmaDashboardScreen extends StatefulWidget {
 class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
   int _currentIndex = 1; // 1 = الرئيسية
 
-  // 🔹 الشاشات الأربعة التي يتم التنقل بينها
   final List<Widget> _screens = [
     const TransactionsScreen(), // Index 0
     const _HomeTab(),           // Index 1 (الرئيسية)
@@ -35,7 +35,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
     const ReportScreen(),       // Index 3
   ];
 
-  // 🔹 دالة مساعدة لإنشاء أيقونات الشريط السفلي وتغيير الشاشة
   Widget _buildNavItem({
     required IconData icon, 
     required IconData activeIcon, 
@@ -104,7 +103,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
             _buildNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'الرئيسية'.tr(), index: 1, context: context),
             _buildNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'العمليات'.tr(), index: 0, context: context),
             
-            // 🔹 زر الإضافة الدائري مدمج في نفس مستوى الأيقونات
+            // 🔹 زر الإضافة الدائري العائم المدمج
             InkWell(
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const AddExpenseScreen()));
@@ -163,7 +162,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Icon(
-                        Icons.account_balance_wallet, 
+                        Icons.account_balance_wallet_rounded, 
                         color: isDark ? theme.colorScheme.onSurface : Colors.white, 
                         size: 48,
                       ),
@@ -238,7 +237,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                 const SizedBox(height: 4),
                 Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade600 : Colors.grey)),
                 const SizedBox(height: 16),
-                // 🔹 استخدام ui.TextDirection لمنع أي أخطاء وضبط الاتجاه
                 Directionality(
                   textDirection: ui.TextDirection.ltr,
                   child: Row(
@@ -319,7 +317,7 @@ class _HomeTab extends StatelessWidget {
 }
 
 // ==========================================
-// 3. HEADER SECTION
+// 3. HEADER SECTION (تعديل اللوجو العائم)
 // ==========================================
 class _HeaderSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -329,8 +327,9 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 يتم تصفير العلامة الحمراء عند قراءة الإشعارات
     final alertsCount = provider.isAlertsRead ? 0 : provider.smartAlerts.length; 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return FadeInSlide(
       delay: 0,
@@ -338,27 +337,46 @@ class _HeaderSection extends StatelessWidget {
         padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
         child: Row(
           children: [
+            // 🔹 أيقونة المجموعة الاحترافية (Logo Style)
             Hero(
-              tag: 'user_avatar',
-              child: CircleAvatar(
-                radius: 24,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: Icon(Icons.group, color: Theme.of(context).colorScheme.onPrimaryContainer),
+              tag: 'app_logo',
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      isDark ? Colors.teal.shade700 : Colors.teal.shade400,
+                      isDark ? Colors.blue.shade900 : Colors.blue.shade600,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 28),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     provider.groupName.tr(), 
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${'دورة:'.tr()} ${DateFormat('MMMM yyyy', context.locale.languageCode).format(DateTime.now())}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -377,7 +395,7 @@ class _HeaderSection extends StatelessWidget {
               }, 
             ),
             IconButton(
-              icon: const Icon(Icons.menu), 
+              icon: const Icon(Icons.menu_rounded), 
               onPressed: () {
                 Scaffold.of(context).openEndDrawer();
               },
@@ -441,7 +459,7 @@ class _MainCardsSection extends StatelessWidget {
     double totalExpenses = provider.allExpenses.fold(0, (sum, item) => sum + item.amount);
     
     double targetBudget = provider.targetBudget;
-    double progressValue = totalExpenses > 0 ? (totalExpenses / targetBudget).clamp(0.0, 1.0) : 0.0;
+    double progressValue = targetBudget > 0 ? (totalExpenses / targetBudget).clamp(0.0, 1.0) : 0.0;
     int percentage = (progressValue * 100).toInt();
 
     return FadeInSlide(
@@ -472,7 +490,7 @@ class _MainCardsSection extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.account_balance_wallet, color: Colors.white, size: 20),
+                        const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
                         const SizedBox(width: 8),
                         Text('إجمالي المصروفات'.tr(), style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12)),
                       ],
@@ -480,10 +498,11 @@ class _MainCardsSection extends StatelessWidget {
                     const SizedBox(height: 12),
                     FittedBox(
                       child: Text(
-                        '${totalExpenses.toStringAsFixed(0)} ${provider.currency.tr()}', 
+                        // 🔹 استخدام FormatHelper هنا
+                        '${FormatHelper.formatNumber(totalExpenses)} ${provider.currency.tr()}', 
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
@@ -546,7 +565,7 @@ class _MainCardsSection extends StatelessWidget {
                               Row(
                                 children: [
                                   Icon(Icons.pie_chart_rounded, color: Theme.of(context).colorScheme.primary, size: 20),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 6),
                                   Text('الميزانية'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11)),
                                 ],
                               ),
@@ -558,7 +577,8 @@ class _MainCardsSection extends StatelessWidget {
                               const SizedBox(height: 4),
                               FittedBox(
                                 child: Text(
-                                  '${'من هدف'.tr()} ${targetBudget.toStringAsFixed(0)}',
+                                  // 🔹 استخدام FormatHelper هنا
+                                  '${'من هدف'.tr()} ${FormatHelper.formatNumber(targetBudget)}',
                                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10),
                                 ),
                               ),
@@ -641,10 +661,11 @@ class _StatisticsGridSection extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _StatCard(width: width, title: 'الأشخاص'.tr(), value: '$personsCount', icon: Icons.group, color: Colors.blue),
-              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt, color: Colors.orange),
-              _StatCard(width: width, title: 'متوسط العملية'.tr(), value: '${average.toStringAsFixed(0)} ${provider.currency.tr()}', icon: Icons.calculate, color: Colors.purple),
-              _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month, color: Colors.teal),
+              _StatCard(width: width, title: 'الأشخاص'.tr(), value: '$personsCount', icon: Icons.group_rounded, color: Colors.blue),
+              _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt_long_rounded, color: Colors.orange),
+              // 🔹 استخدام FormatHelper هنا
+              _StatCard(width: width, title: 'متوسط العملية'.tr(), value: '${FormatHelper.formatNumber(average)} ${provider.currency.tr()}', icon: Icons.calculate_rounded, color: Colors.purple),
+              _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month_rounded, color: Colors.teal),
             ],
           );
         },
@@ -675,8 +696,8 @@ class _StatCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.shade100, borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: color.shade700, size: 20),
+                decoration: BoxDecoration(color: color.shade100.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: Theme.of(context).brightness == Brightness.dark ? color.shade300 : color.shade700, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -712,13 +733,13 @@ class _QuickActionsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _ActionItem(icon: Icons.people_alt_outlined, label: 'الأشخاص'.tr(), onTap: () {
+              _ActionItem(icon: Icons.people_alt_rounded, label: 'الأشخاص'.tr(), onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonsManagementScreen()));
               }),
-              _ActionItem(icon: Icons.handshake_outlined, label: 'مخالصة'.tr(), onTap: () {
+              _ActionItem(icon: Icons.handshake_rounded, label: 'مخالصة'.tr(), onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const SettlementScreen()));
               }),
-              _ActionItem(icon: Icons.bar_chart, label: 'التقارير'.tr(), onTap: () {
+              _ActionItem(icon: Icons.bar_chart_rounded, label: 'التقارير'.tr(), onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScreen()));
               }),
             ],
@@ -758,7 +779,7 @@ class _ActionItem extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -866,7 +887,8 @@ class _SettlementSuggestionSection extends StatelessWidget {
     if (settlements.isEmpty) return const SizedBox.shrink();
 
     final suggestion = settlements.first;
-    final amount = (suggestion['amount'] as double).toStringAsFixed(0);
+    // 🔹 استخدام FormatHelper هنا
+    final amount = FormatHelper.formatNumber(suggestion['amount'] as double);
     final from = suggestion['from'] as String;
     final to = suggestion['to'] as String;
 
@@ -883,14 +905,14 @@ class _SettlementSuggestionSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, color: Theme.of(context).colorScheme.onTertiaryContainer),
+                  Icon(Icons.lightbulb_rounded, color: Theme.of(context).colorScheme.onTertiaryContainer),
                   const SizedBox(width: 8),
                   Text('اقتراح تسوية سريع'.tr(), style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.onTertiaryContainer, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 12),
               Text('$from ${'يدفع'.tr()} $amount ${provider.currency.tr()} ${'لـ'.tr()} $to ${'لتسوية جزء من الرصيد.'.tr()}', 
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onTertiaryContainer)),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onTertiaryContainer, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
@@ -901,7 +923,7 @@ class _SettlementSuggestionSection extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const SettlementScreen()),
                     );
                   },
-                  child: Text('عرض التسويات'.tr()),
+                  child: Text('عرض التسويات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               )
             ],
@@ -920,11 +942,11 @@ class _RecentTransactionsSection extends StatelessWidget {
   const _RecentTransactionsSection({required this.provider});
 
   IconData _getCategoryIcon(String category) {
-    if (category.contains('طعام') || category.contains('أكل')) return Icons.fastfood;
-    if (category.contains('سكن') || category.contains('فندق')) return Icons.hotel;
-    if (category.contains('مواصلات') || category.contains('سيارة')) return Icons.directions_car;
-    if (category.contains('تسوق') || category.contains('شراء')) return Icons.shopping_bag;
-    return Icons.receipt_long;
+    if (category.contains('طعام') || category.contains('أكل')) return Icons.fastfood_rounded;
+    if (category.contains('سكن') || category.contains('فندق')) return Icons.hotel_rounded;
+    if (category.contains('مواصلات') || category.contains('سيارة')) return Icons.directions_car_rounded;
+    if (category.contains('تسوق') || category.contains('شراء')) return Icons.shopping_bag_rounded;
+    return Icons.receipt_long_rounded;
   }
 
   @override
@@ -941,13 +963,13 @@ class _RecentTransactionsSection extends StatelessWidget {
             children: [
               _SectionTitle(title: 'آخر العمليات'.tr()),
               if (recentExpenses.isNotEmpty)
-                TextButton(onPressed: () {}, child: Text('عرض الكل'.tr())),
+                TextButton(onPressed: () {}, child: Text('عرض الكل'.tr(), style: const TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
           if (recentExpenses.isEmpty)
              Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Center(child: Text('لا توجد عمليات مضافة حتى الآن.'.tr())),
+              child: Center(child: Text('لا توجد عمليات مضافة حتى الآن.'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
             )
           else
             ListView.separated(
@@ -965,7 +987,8 @@ class _RecentTransactionsSection extends StatelessWidget {
                   ),
                   title: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('${expense.category.tr()} • ${'دفع:'.tr()} ${expense.payer} • ${DateFormat('d MMM', context.locale.languageCode).format(expense.date)}'),
-                  trailing: Text('${expense.amount.toStringAsFixed(0)} ${provider.currency.tr()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  // 🔹 استخدام FormatHelper هنا
+                  trailing: Text('${FormatHelper.formatNumber(expense.amount)} ${provider.currency.tr()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                   onTap: () {}, 
                 );
               },
@@ -987,6 +1010,8 @@ class _PeopleBalancesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     double totalExpenses = provider.allExpenses.fold(0, (sum, item) => sum + item.amount);
     double sharePerPerson = provider.persons.isNotEmpty ? totalExpenses / provider.persons.length : 0;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return FadeInSlide(
       delay: 0.7,
@@ -996,7 +1021,7 @@ class _PeopleBalancesSection extends StatelessWidget {
           _SectionTitle(title: 'أرصدة الأشخاص'.tr()),
           const SizedBox(height: 12),
           if (provider.persons.isEmpty)
-             Center(child: Text('قم بإضافة أشخاص للمجموعة لعرض الأرصدة.'.tr()))
+             Center(child: Text('قم بإضافة أشخاص للمجموعة لعرض الأرصدة.'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)))
           else
             ListView.builder(
               shrinkWrap: true,
@@ -1010,38 +1035,73 @@ class _PeopleBalancesSection extends StatelessWidget {
 
                 return Card(
                   elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, width: 1), // ✅ تم التعديل هنا
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          child: Text(person.substring(0, 1), style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold)),
+                        // 🔹 تعديل الحرف ليكون بشكل احترافي Premium Avatar
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary.withValues(alpha: 0.8),
+                                theme.colorScheme.primary,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            person.substring(0, 1).toUpperCase(),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20),
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(person, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text('${'دفع:'.tr()} ${paid.toStringAsFixed(0)} ${provider.currency.tr()} • ${'نصيبه:'.tr()} ${sharePerPerson.toStringAsFixed(0)} ${provider.currency.tr()}', style: Theme.of(context).textTheme.bodySmall),
+                              Text(person, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const SizedBox(height: 2),
+                              // 🔹 استخدام FormatHelper هنا
+                              Text('${'دفع:'.tr()} ${FormatHelper.formatNumber(paid)} ${provider.currency.tr()} • ${'نصيبه:'.tr()} ${FormatHelper.formatNumber(sharePerPerson)}', 
+                                style: theme.textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)
+                              ),
                             ],
                           ),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('${balance.abs().toStringAsFixed(0)} ${provider.currency.tr()}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isOwed ? Colors.green : Colors.red)),
+                            // 🔹 استخدام FormatHelper هنا
+                            Text('${FormatHelper.formatNumber(balance.abs())} ${provider.currency.tr()}', 
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isOwed ? Colors.green.shade500 : Colors.red.shade400)
+                            ),
+                            const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: (isOwed ? Colors.green : Colors.red).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(isOwed ? 'له'.tr() : 'عليه'.tr(), style: TextStyle(fontSize: 10, color: isOwed ? Colors.green : Colors.red)),
+                              child: Text(isOwed ? 'له'.tr() : 'عليه'.tr(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isOwed ? Colors.green.shade500 : Colors.red.shade400)),
                             ),
                           ],
                         ),
@@ -1068,7 +1128,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف التنسيق الجديد
 
 class PersonsManagementScreen extends StatelessWidget {
   const PersonsManagementScreen({super.key});
@@ -212,8 +213,9 @@ class PersonsManagementScreen extends StatelessWidget {
                                           children: [
                                             Text(balanceStatus, style: TextStyle(fontSize: 10, color: balanceColor, fontWeight: FontWeight.bold)),
                                             const SizedBox(height: 2),
+                                            // 🔹 استخدام FormatHelper هنا للرصيد النهائي
                                             Text(
-                                              '${balance.abs().toStringAsFixed(1)} ${provider.currency.tr()}', 
+                                              '${FormatHelper.formatNumber(balance.abs())} ${provider.currency.tr()}', 
                                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: balanceColor)
                                             ),
                                           ],
@@ -246,7 +248,8 @@ class PersonsManagementScreen extends StatelessWidget {
   // مكون الإحصائيات الصغير
   // ==========================================
   Widget _buildStatItem(String label, double amount, String currency, Color color) {
-    String amountStr = amount.abs().toStringAsFixed(1); 
+    // 🔹 استخدام FormatHelper هنا لـ (ما دفعه / نصيبه)
+    String amountStr = FormatHelper.formatNumber(amount.abs()); 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

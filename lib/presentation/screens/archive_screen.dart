@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف تنسيق الأرقام
 
 class ArchiveScreen extends StatelessWidget {
   const ArchiveScreen({super.key});
@@ -62,7 +63,6 @@ class ArchiveScreen extends StatelessWidget {
               final double totalAmount = (archive['totalAmount'] as num?)?.toDouble() ?? 0.0;
               final List<dynamic> expensesList = archive['expensesList'] ?? [];
               
-              // 🔹 جلب البيانات: السطر القديم (للتوافق) والبيانات الخام الجديدة (للترجمة)
               final List<dynamic> settlementSummary = archive['settlementSummary'] ?? [];
               final List<dynamic> settlementRawData = archive['settlementRawData'] ?? [];
 
@@ -80,7 +80,6 @@ class ArchiveScreen extends StatelessWidget {
                   ],
                 ),
                 child: Theme(
-                  // إخفاء الخطوط المزعجة لـ ExpansionTile
                   data: theme.copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -99,7 +98,8 @@ class ArchiveScreen extends StatelessWidget {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
-                        '${DateFormat('yyyy-MM-dd', context.locale.languageCode).format(date)} • ${'إجمالي:'.tr()} ${totalAmount.toStringAsFixed(1)} ${provider.currency.tr()}',
+                        // 🔹 استخدام FormatHelper للإجمالي
+                        '${DateFormat('yyyy-MM-dd', context.locale.languageCode).format(date)} • ${'إجمالي:'.tr()} ${FormatHelper.formatNumber(totalAmount)} ${provider.currency.tr()}',
                         style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 12),
                       ),
                     ),
@@ -110,7 +110,7 @@ class ArchiveScreen extends StatelessWidget {
                       ),
                       
                       // ==============================
-                      // 1. قسم التسويات النهائية (معدل لحل مشكلة الترجمة)
+                      // 1. قسم التسويات النهائية
                       // ==============================
                       Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -126,7 +126,6 @@ class ArchiveScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             
-                            // 🔹 التحقق: إذا كان هناك بيانات خام جديدة نستخدمها، وإلا نستخدم النصوص القديمة
                             if (settlementRawData.isNotEmpty)
                               ...settlementRawData.map((s) => _buildModernSettlementRow(s, provider.currency.tr(), isDark))
                             else if (settlementSummary.isNotEmpty)
@@ -174,6 +173,7 @@ class ArchiveScreen extends StatelessWidget {
                               ...expensesList.map((expenseItem) {
                                 final exp = expenseItem as Map<dynamic, dynamic>;
                                 final expDate = exp['date'] != null ? DateTime.parse(exp['date']) : DateTime.now();
+                                final double expAmount = (exp['amount'] as num?)?.toDouble() ?? 0.0;
                                 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 8),
@@ -191,7 +191,7 @@ class ArchiveScreen extends StatelessWidget {
                                           color: isDark ? Colors.black26 : Colors.white,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.receipt, size: 16, color: Colors.grey),
+                                        child: const Icon(Icons.receipt_rounded, size: 16, color: Colors.grey),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -207,9 +207,10 @@ class ArchiveScreen extends StatelessWidget {
                                           ],
                                         ),
                                       ),
+                                      // 🔹 استخدام FormatHelper لمبلغ المصروف الفردي
                                       Text(
-                                        '${(exp['amount'] as num).toDouble().toStringAsFixed(1)} ${provider.currency.tr()}', 
-                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 14)
+                                        '${FormatHelper.formatNumber(expAmount)} ${provider.currency.tr()}', 
+                                        style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.redAccent, fontSize: 14)
                                       ),
                                     ],
                                   ),
@@ -229,8 +230,9 @@ class ArchiveScreen extends StatelessWidget {
     );
   }
 
-  // 🔹 ودجت لعرض التسوية بطريقة تمنع اختلاط اللغات (RTL/LTR)
   Widget _buildModernSettlementRow(Map<dynamic, dynamic> s, String currency, bool isDark) {
+    final double amount = (s['amount'] as num?)?.toDouble() ?? 0.0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -244,7 +246,7 @@ class ArchiveScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.person, color: Colors.teal, size: 16),
+              const Icon(Icons.person_rounded, color: Colors.teal, size: 16),
               const SizedBox(width: 4),
               Text('${s['from']}', style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
@@ -259,12 +261,13 @@ class ArchiveScreen extends StatelessWidget {
             children: [
               Text('${s['to']}', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(width: 4),
-              const Icon(Icons.person_outline, color: Colors.purple, size: 16),
+              const Icon(Icons.person_outline_rounded, color: Colors.purple, size: 16),
             ],
           ),
+          // 🔹 استخدام FormatHelper لمبلغ التسوية
           Text(
-            '${(s['amount'] as num).toDouble().toStringAsFixed(1)} $currency', 
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)
+            '${FormatHelper.formatNumber(amount)} $currency', 
+            style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.redAccent)
           ),
         ],
       ),
