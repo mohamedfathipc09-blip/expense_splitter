@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-// 🔹 أضفنا كلمة hide TextDirection هنا لحل التعارض
 import 'package:easy_localization/easy_localization.dart' hide TextDirection; 
 import 'dashboard_screen.dart';
 
-class LanguageSelectionScreen extends StatelessWidget {
+class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({super.key});
 
-  void _selectLanguage(BuildContext context, String langCode) async {
-    // 1. تغيير لغة التطبيق بناءً على اختيار المستخدم
-    await context.setLocale(Locale(langCode));
+  @override
+  State<LanguageSelectionScreen> createState() => _LanguageSelectionScreenState();
+}
 
-    // 2. حفظ قيمة في Hive تخبر التطبيق أن المرة الأولى قد انتهت
+class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
+  String _selectedLanguage = 'ar';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _selectedLanguage = context.locale.languageCode;
+  }
+
+  void _confirmSelection() async {
+    await context.setLocale(Locale(_selectedLanguage));
+
     var settingsBox = Hive.box('settingsBox');
     await settingsBox.put('isFirstTime', false);
 
-    // 3. الانتقال فوراً إلى الشاشة الرئيسية
-    if (!context.mounted) return;
+    if (!mounted) return; 
+    
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const QesmaDashboardScreen()),
     );
@@ -24,53 +34,209 @@ class LanguageSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // نجعل الشاشة دائماً LTR هنا لكي يظهر النص الإنجليزي والعربي بشكل متناسق قبل اختيار اللغة
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F9),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.language, size: 80, color: Colors.indigo),
-                const SizedBox(height: 24),
-                const Text(
-                  'اختر لغة التطبيق\nChoose App Language',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo, height: 1.5),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8F9FA),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500), // تصميم ممتاز للشاشات الكبيرة والويب
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.language_rounded,
+                        size: 50,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                    onPressed: () => _selectLanguage(context, 'ar'),
-                    child: const Text('العربية', style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.indigo,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 20),
+                    Text(
+                      'اختر لغة التطبيق',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                    onPressed: () => _selectLanguage(context, 'en'),
-                    child: const Text('English', style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Choose your preferred language\nيمكنك تغيير اللغة لاحقاً من الإعدادات',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        height: 1.4,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 30),
+
+                    _buildLanguageCard(
+                      languageCode: 'ar',
+                      nativeName: 'العربية',
+                      englishName: 'Arabic',
+                      iconText: 'ع',
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLanguageCard(
+                      languageCode: 'en',
+                      nativeName: 'English',
+                      englishName: 'English',
+                      iconText: 'En',
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: _confirmSelection,
+                        child: Text(
+                          _selectedLanguage == 'ar' ? 'متابعة' : 'Continue',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageCard({
+    required String languageCode,
+    required String nativeName,
+    required String englishName,
+    required String iconText,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    bool isSelected = _selectedLanguage == languageCode;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedLanguage = languageCode;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? theme.colorScheme.primary.withValues(alpha: 0.1) 
+              : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            if (!isSelected)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? theme.colorScheme.primary 
+                    : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                iconText,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected 
+                      ? theme.colorScheme.onPrimary 
+                      : (isDark ? Colors.white : Colors.black87),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nativeName,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    englishName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: isSelected ? 1.0 : 0.0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  size: 16,
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

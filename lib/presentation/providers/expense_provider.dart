@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../data/models/expense_model.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 class ExpenseProvider with ChangeNotifier {
   List<ExpenseModel> _expenses = [];
   List<String> _persons = [];
   String? _searchPersonQuery;
 
   // 🔹 قائمة لحفظ الإشعارات التي تم إخفاؤها/قراءتها مؤقتاً
-final List<String> _dismissedAlerts = [];
+  final List<String> _dismissedAlerts = [];
+  
+  // 🔹 التعديل الجديد: متغير للتحكم في ظهور العلامة الحمراء للإشعارات الجديدة
+  bool _isAlertsRead = false;
+  bool get isAlertsRead => _isAlertsRead;
+
   // ==========================================
   // 1. الميزات المستعادة (العملة، الوضع الليلي، الأرشيف)
   // ==========================================
@@ -84,6 +90,7 @@ final List<String> _dismissedAlerts = [];
     await box.put(expense.id, expense);
     _expenses.add(expense);
     _dismissedAlerts.clear(); // تصفير الإشعارات المقروءة عند إضافة عملية جديدة
+    _isAlertsRead = false; // 🔹 إرجاع العلامة الحمراء لوجود تحديث جديد
     notifyListeners();
   }
 
@@ -110,6 +117,7 @@ final List<String> _dismissedAlerts = [];
       await personBox.add(name);
       _persons.add(name);
       _dismissedAlerts.clear();
+      _isAlertsRead = false; // 🔹 إرجاع العلامة الحمراء لوجود تحديث جديد
       notifyListeners();
     }
   }
@@ -227,13 +235,21 @@ final List<String> _dismissedAlerts = [];
     await box.clear();
     _expenses.clear();
     _dismissedAlerts.clear();
+    _isAlertsRead = false; // 🔹 إرجاع العلامة الحمراء لبداية دورة جديدة
 
     notifyListeners();
   }
 
   // ==========================================
-  // 4. محرك التنبيهات الذكية (تم تحديثه)
+  // 4. محرك التنبيهات الذكية
   // ==========================================
+  
+  // 🔹 التعديل الجديد: دالة لتحديد أن المستخدم شاهد الإشعارات لإخفاء العلامة الحمراء
+  void markAlertsAsRead() {
+    _isAlertsRead = true;
+    notifyListeners();
+  }
+
   void dismissAlert(String title) {
     if (!_dismissedAlerts.contains(title)) {
       _dismissedAlerts.add(title);
@@ -248,6 +264,7 @@ final List<String> _dismissedAlerts = [];
         _dismissedAlerts.add(alert['title']);
       }
     }
+    _isAlertsRead = true; // 🔹 إخفاء العلامة الحمراء أيضاً عند مسح الكل
     notifyListeners();
   }
 
@@ -275,7 +292,6 @@ final List<String> _dismissedAlerts = [];
     for (var person in _persons) {
      if (!_expenses.any((e) => e.payer == person)) {
       alerts.add({
-        // 🔹 دمج اسم الشخص مع الجملة المترجمة
         'title': '$person ${'لم يقم بأي دفع!'.tr()}', 
         'subtitle': 'تأكد من مشاركة المصروفات.'.tr(), 
         'icon': Icons.info_outline, 
@@ -286,7 +302,6 @@ final List<String> _dismissedAlerts = [];
 
     if (settlementTransactions.isNotEmpty && _expenses.isNotEmpty) {
        alerts.add({
-         // 🔹 إضافة .tr() للنصوص
          'title': 'اقتراح تسوية جاهز'.tr(), 
          'subtitle': 'يمكنك الآن تسوية حسابات المجموعة.'.tr(), 
          'icon': Icons.handshake, 

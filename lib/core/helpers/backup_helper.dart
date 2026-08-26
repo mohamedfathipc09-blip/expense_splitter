@@ -60,6 +60,7 @@ class BackupHelper {
         mimeType: 'application/json',
       );
 
+      // 🔹 تم حل التحذيرات: استخدام SharePlus.instance.share
       await SharePlus.instance.share(
         ShareParams(
           files: <XFile>[xFile],
@@ -77,12 +78,7 @@ class BackupHelper {
   /// استعادة نسخة احتياطية
   static Future<bool> restoreBackup() async {
     try {
-      /*
-       * file_picker 12
-       *
-       * pickFiles() ترجع List<PlatformFile>
-       * مباشرة.
-       */
+      // 🔹 تم حل أخطاء FilePicker: استخدام طريقة الاستدعاء المتوافقة مع إصدارك
       final List<PlatformFile> files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: <String>['json'],
@@ -94,13 +90,8 @@ class BackupHelper {
 
       final PlatformFile file = files.first;
 
-      /*
-       * file_picker 12 يوفر XFile للملف المختار.
-       *
-       * نقرأ محتوى الملف مباشرة من XFile.
-       */
+      // 🔹 قراءة الملفات في الذاكرة (RAM) لتعمل على الويب والموبايل بأمان
       final XFile xFile = file.xFile;
-
       final Uint8List fileBytes = await xFile.readAsBytes();
 
       if (fileBytes.isEmpty) {
@@ -131,8 +122,7 @@ class BackupHelper {
       final Box<ExpenseModel> expenseBox =
           Hive.box<ExpenseModel>('expensesBox');
 
-      final Box settingsBox =
-          Hive.box('settingsBox');
+      final Box settingsBox = Hive.box('settingsBox');
 
       final Box<ArchiveModel> archiveBox =
           Hive.box<ArchiveModel>('archiveBox');
@@ -218,8 +208,7 @@ class BackupHelper {
             continue;
           }
 
-          final dynamic summaryData =
-              data['settlementSummary'];
+          final dynamic summaryData = data['settlementSummary'];
 
           final List<String> settlementSummary =
               summaryData is List

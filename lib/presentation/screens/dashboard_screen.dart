@@ -1,3 +1,4 @@
+import 'dart:ui' as ui; // 🔹 تم الإضافة لحل تعارض TextDirection
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,7 +36,13 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
   ];
 
   // 🔹 دالة مساعدة لإنشاء أيقونات الشريط السفلي وتغيير الشاشة
-  Widget _buildNavItem({required IconData icon, required IconData activeIcon, required String label, required int index, required BuildContext context}) {
+  Widget _buildNavItem({
+    required IconData icon, 
+    required IconData activeIcon, 
+    required String label, 
+    required int index, 
+    required BuildContext context,
+  }) {
     final theme = Theme.of(context);
     bool isSelected = _currentIndex == index;
     return InkWell(
@@ -63,7 +70,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                 fontSize: 10, 
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-              )
+              ),
             ),
           ],
         ),
@@ -79,7 +86,6 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
       backgroundColor: theme.colorScheme.surface,
       endDrawer: _buildDrawer(context, theme),
       
-      // 🔹 تم استبدال الـ BottomAppBar بـ Container عادي ليكون الزر في نفس المستوى
       bottomNavigationBar: Container(
         height: 75,
         decoration: BoxDecoration(
@@ -107,7 +113,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
               child: Container(
                 width: 50,
                 height: 50,
-                margin: const EdgeInsets.only(bottom: 6), // رفعه قليلاً جداً ليتناسق مع النصوص
+                margin: const EdgeInsets.only(bottom: 6),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
@@ -117,7 +123,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     )
-                  ]
+                  ],
                 ),
                 child: Icon(Icons.add, color: theme.colorScheme.onPrimary, size: 28),
               ),
@@ -136,9 +142,12 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
     );
   }
 
-  // 🔹 القائمة الجانبية (Drawer)
+  // 🔹 القائمة الجانبية (Drawer) 
   Widget _buildDrawer(BuildContext context, ThemeData theme) {
+    final bool isDark = theme.brightness == Brightness.dark;
+
     return Drawer(
+      backgroundColor: theme.colorScheme.surface,
       child: Column(
         children: [
           Expanded(
@@ -146,20 +155,33 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
               padding: EdgeInsets.zero,
               children: [
                 DrawerHeader(
-                  decoration: BoxDecoration(color: theme.colorScheme.primary),
+                  decoration: BoxDecoration(
+                    color: isDark ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primary,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Icon(Icons.account_balance_wallet, color: Colors.white, size: 48),
+                      Icon(
+                        Icons.account_balance_wallet, 
+                        color: isDark ? theme.colorScheme.onSurface : Colors.white, 
+                        size: 48,
+                      ),
                       const SizedBox(height: 12),
-                      Text('قسمة المصاريف'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(
+                        'قسمة المصاريف'.tr(), 
+                        style: TextStyle(
+                          color: isDark ? theme.colorScheme.onSurface : Colors.white, 
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.settings_outlined, color: Colors.black87),
-                  title: Text('الإعدادات'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  leading: Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface),
+                  title: Text('الإعدادات'.tr(), style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(context); 
                     Navigator.push(
@@ -170,19 +192,19 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined, color: Colors.black87),
-                  title: Text('سياسة الخصوصية'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  leading: Icon(Icons.privacy_tip_outlined, color: theme.colorScheme.onSurface),
+                  title: Text('سياسة الخصوصية'.tr(), style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                       context, 
-                      MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen())
+                      MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.email_outlined, color: Colors.black87),
-                  title: Text('تواصل معنا'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  leading: Icon(Icons.email_outlined, color: theme.colorScheme.onSurface),
+                  title: Text('تواصل معنا'.tr(), style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                   onTap: () async {
                     Navigator.pop(context); 
                     final Uri emailUri = Uri.parse("mailto:mohamedfathipc09@gmail.com?subject=تطبيق قسمة المصاريف");
@@ -191,7 +213,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت'.tr()))
+                          SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت'.tr())),
                         );
                       }
                     }
@@ -205,21 +227,36 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
             alignment: Alignment.center,
             child: Column(
               children: [
-                const Text('Qesma Expenses', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.blueGrey, letterSpacing: 1.2)),
+                Text(
+                  'Qesma Expenses', 
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800, 
+                    color: isDark ? Colors.grey.shade400 : Colors.blueGrey, 
+                    letterSpacing: 1.2,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                const Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('Version 1.0.0', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade600 : Colors.grey)),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.terminal, color: Colors.teal, size: 16),
-                    const SizedBox(width: 6),
-                    const Text('Developed by ', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    const Text(
-                      'Mohamed Fathi', 
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.teal)
-                    ),
-                  ],
+                // 🔹 استخدام ui.TextDirection لمنع أي أخطاء وضبط الاتجاه
+                Directionality(
+                  textDirection: ui.TextDirection.ltr,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.terminal, color: isDark ? Colors.tealAccent : Colors.teal, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Developed by ', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade500 : Colors.grey)),
+                      Text(
+                        'Mohamed Fathi', 
+                        style: TextStyle(
+                          fontSize: 13, 
+                          fontWeight: FontWeight.w900, 
+                          color: isDark ? Colors.tealAccent : Colors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               ],
             ),
@@ -245,12 +282,14 @@ class _HomeTab extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          SliverToBoxAdapter(child: _HeaderSection(
-            provider: provider, 
-            onNotificationTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen()));
-            }
-          )), 
+          SliverToBoxAdapter(
+            child: _HeaderSection(
+              provider: provider, 
+              onNotificationTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen()));
+              },
+            ),
+          ), 
           SliverPadding(
             padding: const EdgeInsetsDirectional.symmetric(horizontal: 16.0),
             sliver: SliverList(
@@ -290,7 +329,8 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alertsCount = provider.smartAlerts.length; 
+    // 🔹 يتم تصفير العلامة الحمراء عند قراءة الإشعارات
+    final alertsCount = provider.isAlertsRead ? 0 : provider.smartAlerts.length; 
 
     return FadeInSlide(
       delay: 0,
@@ -329,9 +369,12 @@ class _HeaderSection extends StatelessWidget {
                 isLabelVisible: alertsCount > 0, 
                 label: Text('$alertsCount'),
                 backgroundColor: Colors.redAccent,
-                child: const Icon(Icons.notifications_outlined)
+                child: const Icon(Icons.notifications_outlined),
               ),
-              onPressed: onNotificationTap, 
+              onPressed: () {
+                provider.markAlertsAsRead();
+                onNotificationTap(); 
+              }, 
             ),
             IconButton(
               icon: const Icon(Icons.menu), 
@@ -525,7 +568,7 @@ class _MainCardsSection extends StatelessWidget {
                                 style: TextStyle(
                                   color: Colors.teal.shade300, 
                                   fontSize: 8, 
-                                  fontWeight: FontWeight.bold
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -542,7 +585,7 @@ class _MainCardsSection extends StatelessWidget {
                                 strokeWidth: 6,
                                 backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  progressValue > 0.8 ? Colors.redAccent : Theme.of(context).colorScheme.primary
+                                  progressValue > 0.8 ? Colors.redAccent : Theme.of(context).colorScheme.primary,
                                 ),
                                 strokeCap: StrokeCap.round,
                               ),
@@ -604,7 +647,7 @@ class _StatisticsGridSection extends StatelessWidget {
               _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month, color: Colors.teal),
             ],
           );
-        }
+        },
       ),
     );
   }
@@ -723,7 +766,7 @@ class _ActionItem extends StatelessWidget {
 }
 
 // ==========================================
-// 7. SMART ALERTS (تم التعديل ليكون آمن تماماً ضد الأخطاء)
+// 7. SMART ALERTS 
 // ==========================================
 class _SmartAlertsSection extends StatelessWidget {
   final ExpenseProvider provider;
@@ -750,8 +793,6 @@ class _SmartAlertsSection extends StatelessWidget {
                 final alert = alerts[index];
                 final List<String> args = alert['args'] as List<String>? ?? [];
                 
-                // 🔹 التعديل الجذري: نتحقق من وجود titleKey أو title معاً 🔹
-                // هذا يضمن أن الشاشة ستعمل دائماً، بغض النظر عن نسخة الـ Provider
                 final String finalTitle = (alert['titleKey'] ?? alert['title'] ?? '').toString();
                 final String finalSubtitle = (alert['subtitleKey'] ?? alert['subtitle'] ?? '').toString();
                 
@@ -857,7 +898,7 @@ class _SettlementSuggestionSection extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context, 
-                      MaterialPageRoute(builder: (context) => const SettlementScreen())
+                      MaterialPageRoute(builder: (context) => const SettlementScreen()),
                     );
                   },
                   child: Text('عرض التسويات'.tr()),

@@ -331,6 +331,7 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
+  // 🔹 التعديل الأول: جعل كارت التسوية مدمجاً وفي المنتصف
   Widget _buildSettlementsSection(List<Map<String, dynamic>> settlements, String currency) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -353,20 +354,51 @@ class ReportScreen extends StatelessWidget {
           if (settlements.isEmpty)
             Text('لا توجد مبالغ مستحقة، جميع الحسابات خالصة!'.tr(), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
           else
-            ...settlements.map((s) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
+            ...settlements.map((s) => Container(
+                  margin: const EdgeInsets.only(bottom: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.teal.withValues(alpha: 0.2), width: 1),
+                  ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center, // مركزنا العناصر بدل تباعدها
                     children: [
-                      Row(children: [const Icon(Icons.person, color: Colors.teal, size: 16), const SizedBox(width: 4), Text(s['from'], style: const TextStyle(fontWeight: FontWeight.bold))]),
-                      Column(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('يدفع إلى'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                          Text('${s['amount'].toStringAsFixed(2)} $currency', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                          const Icon(Icons.arrow_forward, color: Colors.teal, size: 16),
+                          const Icon(Icons.person, color: Colors.teal, size: 16),
+                          const SizedBox(width: 4),
+                          Text(s['from'], style: const TextStyle(fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      Row(children: [Text(s['to'], style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 4), const Icon(Icons.person, color: Colors.purple, size: 16)]),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('${s['amount'].toStringAsFixed(2)} $currency', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 14)),
+                            const SizedBox(height: 2),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('يدفع لـ'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 14),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(s['to'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.person_outline, color: Colors.purple, size: 16),
+                        ],
+                      ),
                     ],
                   ),
                 )),
@@ -591,19 +623,30 @@ class ReportScreen extends StatelessWidget {
                           if (settlements.isEmpty)
                             pw.Text('لا توجد تسويات مطلوبة.'.tr(), style: const pw.TextStyle(color: PdfColors.grey))
                           else
+                            // 🔹 التعديل الثاني: ضبط التباعد وتوسيط كارت التسويات داخل الـ PDF
                             ...settlements.map((s) => pw.Container(
                               margin: const pw.EdgeInsets.only(bottom: 8),
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: pw.BoxDecoration(
+                                color: PdfColors.white,
+                                borderRadius: pw.BorderRadius.circular(8),
+                                border: pw.Border.all(color: greenColor, width: 0.5),
+                              ),
                               child: pw.Row(
-                                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: pw.MainAxisAlignment.center,
                                 children: [
-                                  pw.Text(s['from'], style: pw.TextStyle(font: arabicFontBold)),
-                                  pw.Column(
-                                    children: [
-                                      pw.Text('يدفع إلى'.tr(), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey)),
-                                      pw.Text('${s['amount'].toStringAsFixed(2)}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 10)),
-                                    ]
+                                  pw.Text(s['from'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),
+                                  pw.Padding(
+                                    padding: const pw.EdgeInsets.symmetric(horizontal: 20),
+                                    child: pw.Column(
+                                      children: [
+                                        pw.Text('${s['amount'].toStringAsFixed(2)} ${provider.currency.tr()}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 11)),
+                                        pw.SizedBox(height: 2),
+                                        pw.Text('يدفع لـ'.tr(), style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                                      ]
+                                    ),
                                   ),
-                                  pw.Text(s['to'], style: pw.TextStyle(font: arabicFontBold)),
+                                  pw.Text(s['to'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),
                                 ]
                               )
                             )),

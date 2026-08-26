@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_localization/easy_localization.dart'; // 🔹 1. إضافة مكتبة الترجمة
+import 'package:easy_localization/easy_localization.dart'; 
+
 import 'data/models/expense_model.dart';
 import 'data/models/archive_model.dart';
 import 'presentation/providers/expense_provider.dart';
 import 'presentation/screens/splash_screen.dart'; 
+import 'presentation/screens/language_selection_screen.dart'; // 🔹 1. استدعاء شاشة اختيار اللغة
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await EasyLocalization.ensureInitialized(); // 🔹 2. تهيئة مكتبة الترجمة قبل التشغيل
+  await EasyLocalization.ensureInitialized();
   
-  // 🔹 التعديل الأول: تهيئة التاريخ للغتين لضمان عدم حدوث أخطاء عند التبديل
   await initializeDateFormatting('ar', null);
   await initializeDateFormatting('en', null);
 
@@ -27,13 +28,12 @@ void main() async {
   await Hive.openBox('settingsBox');
   await Hive.openBox<ArchiveModel>('archiveBox'); 
 
-  // 🔹 3. تغليف التطبيق بمحرك الترجمة
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('ar'), Locale('en')],
-      path: 'assets/translations', // مسار المجلد الذي أنشأناه
+      path: 'assets/translations', 
       fallbackLocale: const Locale('ar'),
-      startLocale: const Locale('ar'), // اللغة الافتراضية
+      startLocale: const Locale('ar'), 
       child: const MyApp(),
     ),
   );
@@ -44,16 +44,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 2. التحقق مما إذا كانت هذه أول مرة يفتح فيها المستخدم التطبيق
+    final settingsBox = Hive.box('settingsBox');
+    final bool isFirstTime = settingsBox.get('isFirstTime', defaultValue: true);
+
     return ChangeNotifierProvider(
       create: (_) => ExpenseProvider(),
       child: Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
           return MaterialApp(
-            // 🔹 التعديل الثاني: استخدام onGenerateTitle لترجمة اسم التطبيق ديناميكياً
             onGenerateTitle: (context) => 'قسمة المصاريف'.tr(),
             debugShowCheckedModeBanner: false,
             
-            // 🔹 4. ربط إعدادات اللغة بالتطبيق (هذا ما سيقلب الاتجاهات RTL/LTR)
             localizationsDelegates: context.localizationDelegates,
             supportedLocales: context.supportedLocales,
             locale: context.locale, 
@@ -73,7 +75,8 @@ class MyApp extends StatelessWidget {
             ),
             themeMode: provider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             
-            home: const SplashScreen(), 
+            // 🔹 3. توجيه ذكي: لو أول مرة افتح شاشة اللغة، لو مش أول مرة افتح الـ Splash
+            home: isFirstTime ? const LanguageSelectionScreen() : const SplashScreen(), 
           );
         },
       ),
