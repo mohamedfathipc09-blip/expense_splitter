@@ -31,32 +31,43 @@ class StatisticsScreen extends StatelessWidget {
     // ترتيب تنازلي للتصنيفات
     var sortedCategories = categoryBreakdown.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
-    // قائمة ألوان احترافية للرسوم البيانية
+    // قائمة ألوان احترافية وعصرية للرسوم البيانية
     final List<Color> chartColors = [
-      Colors.blue.shade500,
-      Colors.orange.shade500,
-      Colors.purple.shade500,
-      Colors.teal.shade500,
-      Colors.red.shade500,
-      Colors.green.shade500,
-      Colors.indigo.shade500,
-      Colors.pink.shade500,
+      const Color(0xFF4F46E5), // Indigo
+      const Color(0xFF06B6D4), // Cyan
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFFEC4899), // Pink
+      const Color(0xFF8B5CF6), // Purple
+      const Color(0xFFF43F5E), // Rose
+      const Color(0xFF3B82F6), // Blue
     ];
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), // خلفيات هادئة جداً
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9), // متناسق مع باقي التطبيق
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('الإحصائيات والتحليلات'.tr(), style: TextStyle(fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+        title: Text(
+          'الإحصائيات والتحليلات'.tr(), 
+          style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)
+        ),
         centerTitle: true,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: totalExpenses == 0
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.pie_chart_outline, size: 80, color: Colors.grey.withValues(alpha: 0.3)),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade900 : Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.pie_chart_outline_rounded, size: 60, color: Colors.grey.shade400),
+                  ),
                   const SizedBox(height: 16),
                   Text('لا توجد بيانات كافية للإحصائيات'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
@@ -64,25 +75,25 @@ class StatisticsScreen extends StatelessWidget {
             )
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 1. بطاقة الملخص المالي
-                  _buildSummaryHeader(context, totalExpenses, provider.allExpenses.length, provider.currency),
+                  // 🔹 1. بطاقة الملخص المالي (Gradient Card)
+                  _buildSummaryHeader(context, totalExpenses, provider.allExpenses.length, provider.currency.tr(), isDark),
                   const SizedBox(height: 32),
 
                   // 🔹 2. مؤشر مساهمة الأشخاص
-                  Text('مساهمة الأشخاص'.tr(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                  Text('مساهمة الأشخاص'.tr(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                   const SizedBox(height: 16),
-                  _buildChartSection(context, sortedPersons, totalExpenses, chartColors, provider.currency, isDark),
+                  _buildChartSection(context, sortedPersons, totalExpenses, chartColors, provider.currency.tr(), isDark),
 
                   const SizedBox(height: 32),
 
                   // 🔹 3. مؤشر تصنيف العمليات
-                  Text('تصنيف العمليات'.tr(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                  Text('تصنيف العمليات'.tr(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
                   const SizedBox(height: 16),
-                  _buildChartSection(context, sortedCategories, totalExpenses, chartColors, provider.currency, isDark),
+                  _buildChartSection(context, sortedCategories, totalExpenses, chartColors, provider.currency.tr(), isDark),
 
                   const SizedBox(height: 100), // مسافة للتمرير المريح
                 ],
@@ -95,18 +106,27 @@ class StatisticsScreen extends StatelessWidget {
   // مكونات الواجهة (Widgets)
   // ==========================================
 
-  Widget _buildSummaryHeader(BuildContext context, double total, int count, String currency) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    // 🔹 تحديد ما إذا كانت كلمة "عملية" مفرد أم جمع (حسب لغة واجهة المستخدم)
+  Widget _buildSummaryHeader(BuildContext context, double total, int count, String currency, bool isDark) {
     String transactionWord = count == 1 ? 'عملية'.tr() : 'عمليات'.tr();
     
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        gradient: LinearGradient(
+          colors: isDark 
+              ? [const Color(0xFF312E81), const Color(0xFF4338CA)] // Darker Indigo
+              : [const Color(0xFF4F46E5), const Color(0xFF6366F1)], // Vibrant Indigo
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.3), 
+            blurRadius: 20, 
+            offset: const Offset(0, 10)
+          )
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,24 +134,23 @@ class StatisticsScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('إجمالي الصرف'.tr(), style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.bold)),
+              Text('إجمالي الصرف'.tr(), style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              // 🔹 إضافة الترجمة للعملة
-              Text('${total.toStringAsFixed(0)} ${currency.tr()}', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+              Text('${total.toStringAsFixed(1)} $currency', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
             ],
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Column(
               children: [
-                const Icon(Icons.receipt_long, color: Colors.blue),
+                const Icon(Icons.receipt_long_rounded, color: Colors.white),
                 const SizedBox(height: 4),
-                // 🔹 استخدام كلمة المعاملة الصحيحة المترجمة
-                Text('$count $transactionWord', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12)),
+                Text('$count $transactionWord', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
               ],
             ),
           )
@@ -142,39 +161,47 @@ class StatisticsScreen extends StatelessWidget {
 
   Widget _buildChartSection(BuildContext context, List<MapEntry<String, double>> data, double total, List<Color> colors, String currency, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04), 
+            blurRadius: 15, 
+            offset: const Offset(0, 8)
+          )
+        ],
       ),
       child: Column(
         children: [
-          // 🔹 الرسم البياني الدائري (Donut Chart)
+          // 🔹 الرسم البياني الدائري (Modern Donut Chart)
           SizedBox(
-            height: 200,
+            height: 220,
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeOutCubic,
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeOutQuart,
               builder: (context, value, child) {
                 return Stack(
                   alignment: Alignment.center,
                   children: [
                     CustomPaint(
-                      size: const Size(160, 160),
+                      size: const Size(180, 180),
                       painter: _DonutChartPainter(
                         data: data.map((e) => e.value).toList(),
                         total: total,
                         colors: colors,
                         animationValue: value,
+                        isDark: isDark,
                       ),
                     ),
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('الإجمالي'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                        Text(total.toStringAsFixed(0), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                        Text('الإجمالي'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        Text(total.toStringAsFixed(0), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
                       ],
                     )
                   ],
@@ -182,39 +209,54 @@ class StatisticsScreen extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           
-          // 🔹 تفاصيل النسب المئوية (Legend)
+          // 🔹 تفاصيل النسب المئوية (Legend) بتصميم الكروت الصغيرة
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: data.length,
-            separatorBuilder: (context, index) => Divider(color: Colors.grey.withValues(alpha: 0.1), height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final item = data[index];
               final color = colors[index % colors.length];
               final percentage = (item.value / total) * 100;
 
-              return Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(item.key.tr(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // 🔹 إضافة الترجمة للعملة هنا أيضاً
-                      Text('${item.value.toStringAsFixed(0)} ${currency.tr()}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
-                      Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                ),
+                child: Row(
+                  children: [
+                    // المربع اللوني الدائري
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: color, 
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4, offset: const Offset(0, 2))
+                        ]
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(item.key.tr(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('${item.value.toStringAsFixed(1)} $currency', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                        const SizedBox(height: 2),
+                        Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -225,36 +267,59 @@ class StatisticsScreen extends StatelessWidget {
 }
 
 // ==========================================
-// CUSTOM PAINTER (لرسم الـ Donut Chart باحترافية وبدون مكتبات خارجية)
+// CUSTOM PAINTER (رسم عصري بحواف دائرية StrokeCap.round)
 // ==========================================
 class _DonutChartPainter extends CustomPainter {
   final List<double> data;
   final double total;
   final List<Color> colors;
   final double animationValue;
+  final bool isDark;
 
-  _DonutChartPainter({required this.data, required this.total, required this.colors, required this.animationValue});
+  _DonutChartPainter({
+    required this.data, 
+    required this.total, 
+    required this.colors, 
+    required this.animationValue,
+    required this.isDark,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (total == 0) return;
 
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    double startAngle = -pi / 2; // يبدأ الرسم من الأعلى (الساعة 12)
-    const double strokeWidth = 24.0; // سمك الدائرة
+    const double strokeWidth = 22.0; 
 
+    // 1. رسم خلفية مسار الدائرة (Track) لشكل 3D
+    final bgPaint = Paint()
+      ..color = isDark ? Colors.grey.shade800.withValues(alpha: 0.5) : Colors.grey.shade200
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, 0, 2 * pi, false, bgPaint);
+
+    // 2. رسم البيانات
+    double startAngle = -pi / 2; // يبدأ من الأعلى (الساعة 12)
+    
     for (int i = 0; i < data.length; i++) {
+      // إذا كانت القيمة 0 لا ترسم شيئاً
+      if (data[i] == 0) continue;
+
+      // إضافة فراغ بسيط بين الأقسام
       final sweepAngle = (data[i] / total) * 2 * pi * animationValue;
       
       final paint = Paint()
         ..color = colors[i % colors.length]
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.butt; // لضمان عدم وجود فراغات
+        ..strokeCap = StrokeCap.round; // 🔹 السر هنا: حواف دائرية ناعمة جداً
 
-      canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
+      // يتم إنقاص زاوية الرسم قليلاً جداً لتفادي تداخل الحواف الدائرية بشكل مزعج
+      final actualSweep = sweepAngle > 0.05 ? sweepAngle - 0.05 : sweepAngle;
+
+      canvas.drawArc(rect, startAngle, actualSweep, false, paint);
       
-      // مسافة بيضاء صغيرة جداً بين كل قسم (للشكل الاحترافي)
       startAngle += sweepAngle;
     }
   }

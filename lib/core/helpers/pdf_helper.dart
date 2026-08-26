@@ -11,7 +11,7 @@ class PdfHelper {
     required double individualShare,
     required List<Map<String, dynamic>> accountStatuses,
     required String currency,
-    List<Map<String, dynamic>>? settlements, // 🔹 أضفنا اقتراحات التسوية اختيارياً لو احتجتها
+    List<Map<String, dynamic>>? settlements, // اقتراحات التسوية
   }) async {
     final pdf = pw.Document();
     
@@ -21,6 +21,7 @@ class PdfHelper {
 
     if (!buildContext.mounted) return;
 
+    // تحديد لغة التطبيق لقلب اتجاه الـ PDF بالكامل
     bool isArabic = buildContext.locale.languageCode == 'ar';
 
     pdf.addPage(
@@ -89,9 +90,10 @@ class PdfHelper {
               headers: ['الشخص'.tr(), 'ما دفعه'.tr(), 'الرصيد النهائي'.tr()],
               data: accountStatuses.map((s) {
                 double balance = s['balance'];
+                // 🔹 تم التعديل هنا ليكون الرقم بجانبه الحالة لتجنب لخبطة الاتجاهات
                 String status = balance > 0 
-                    ? '${'له'.tr()} ${balance.toStringAsFixed(1)}' 
-                    : (balance < 0 ? '${'عليه'.tr()} ${balance.abs().toStringAsFixed(1)}' : 'خالص'.tr());
+                    ? '${balance.toStringAsFixed(1)} (${'له'.tr()})' 
+                    : (balance < 0 ? '${balance.abs().toStringAsFixed(1)} (${'عليه'.tr()})' : 'خالص'.tr());
                 return [
                   s['name'],
                   '${s['totalPaid'].toStringAsFixed(1)} $currency',
@@ -108,26 +110,39 @@ class PdfHelper {
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.teal800),
               ),
               pw.SizedBox(height: 8),
+              
+              // 🔹 التعديل الجذري: فصل العناصر لتجنب اختلاط اللغات (RTL/LTR Mixing)
               ...settlements.map((s) => pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 6),
-                padding: const pw.EdgeInsets.all(8),
+                margin: const pw.EdgeInsets.only(bottom: 8),
+                padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: pw.BoxDecoration(
-                  color: PdfColors.green50,
-                  border: pw.Border.all(color: PdfColors.green200),
-                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+                  color: PdfColors.teal50,
+                  border: pw.Border.all(color: PdfColors.teal200),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
                 ),
                 child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text(s['from'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 16),
-                      child: pw.Text(
-                        '${s['amount'].toStringAsFixed(2)} $currency (${'يدفع لـ'.tr()})',
-                        style: pw.TextStyle(color: PdfColors.red800, fontWeight: pw.FontWeight.bold),
-                      ),
+                    // من يدفع
+                    pw.Text(s['from'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                    
+                    // المنتصف (المبلغ وكلمة "يدفع لـ")
+                    pw.Column(
+                      children: [
+                        pw.Text(
+                          '${(s['amount'] as num).toDouble().toStringAsFixed(2)} $currency',
+                          style: pw.TextStyle(color: PdfColors.red800, fontWeight: pw.FontWeight.bold, fontSize: 12),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          'يدفع لـ'.tr(),
+                          style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 10),
+                        ),
+                      ],
                     ),
-                    pw.Text(s['to'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    
+                    // لمين يدفع
+                    pw.Text(s['to'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
                   ],
                 ),
               )),

@@ -208,8 +208,18 @@ class ExpenseProvider with ChangeNotifier {
     }
     final archiveBox = Hive.box('archivesBox');
 
+    // 🔹 الاحتفاظ بالنص القديم للحفاظ على الأرشيفات السابقة التي قد تعتمد عليه
     final List<String> summaryLines = settlementTransactions.map((s) {
       return "${s['from']} يدفع لـ ${s['to']} مبلغ ${s['amount'].toStringAsFixed(2)} $currency";
+    }).toList();
+
+    // 🔹 التعديل الجديد: حفظ البيانات الخام الديناميكية لتترجم بناءً على اللغة الحالية
+    final List<Map<String, dynamic>> rawSettlementData = settlementTransactions.map((s) {
+      return {
+        'from': s['from'],
+        'to': s['to'],
+        'amount': s['amount'],
+      };
     }).toList();
 
     final Map<String, dynamic> cycleData = {
@@ -218,7 +228,8 @@ class ExpenseProvider with ChangeNotifier {
       'totalAmount': _expenses.fold(0.0, (sum, item) => sum + item.amount),
       'expensesCount': _expenses.length,
       'personsCount': _persons.length,
-      'settlementSummary': summaryLines,
+      'settlementSummary': summaryLines, // دعم الأرشيف القديم
+      'settlementRawData': rawSettlementData, // دعم الترجمة الديناميكية للأرشيف الجديد
       'expensesList': _expenses.map((e) => {
         'title': e.title,
         'amount': e.amount,

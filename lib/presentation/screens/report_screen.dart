@@ -14,14 +14,20 @@ class ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('تقرير المصروفات'.tr(), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: Text(
+          'تقرير المصروفات'.tr(), 
+          style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)
+        ),
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
@@ -47,39 +53,57 @@ class ReportScreen extends StatelessWidget {
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5))],
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), 
+                      blurRadius: 20, 
+                      offset: const Offset(0, 10)
+                    )
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeader(context, provider),
-                    const Divider(thickness: 2, color: Color(0xFF005C53)),
-                    _buildResponsiveSummaryCards(totalExpenses, sharePerPerson, totalTransactions, totalPersons),
+                    _buildHeader(context, provider, isDark),
+                    Divider(thickness: 1, color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, height: 1),
+                    
+                    _buildResponsiveSummaryCards(totalExpenses, sharePerPerson, totalTransactions, totalPersons, isDark),
+                    
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       child: Row(
                         children: [
-                          const Icon(Icons.bar_chart, color: Color(0xFF005C53)),
+                          Icon(Icons.bar_chart_rounded, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53)),
                           const SizedBox(width: 8),
-                          Text('تفاصيل الحسابات والأرصدة'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
+                          Text(
+                            'تفاصيل الحسابات والأرصدة'.tr(), 
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53))
+                          ),
                         ],
                       ),
                     ),
-                    _buildPerfectTable(provider.persons, paidAmounts, sharePerPerson, balances),
-                    const SizedBox(height: 16),
+                    
+                    _buildPerfectTable(provider.persons, paidAmounts, sharePerPerson, balances, isDark),
+                    
+                    const SizedBox(height: 24),
+                    
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildSettlementsSection(settlements, provider.currency.tr()),
+                      child: _buildSettlementsSection(settlements, provider.currency.tr(), isDark),
                     ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    _buildActionButtons(context, provider, totalExpenses, sharePerPerson, paidAmounts, balances, settlements, totalTransactions, isDark),
+                    
                     const SizedBox(height: 24),
-                    _buildActionButtons(context, provider, totalExpenses, sharePerPerson, paidAmounts, balances, settlements, totalTransactions),
-                    const SizedBox(height: 16),
-                    _buildFooter(context),
+                    
+                    _buildFooter(context, isDark),
                   ],
                 ),
               ),
@@ -116,45 +140,48 @@ class ReportScreen extends StatelessWidget {
     return settlements;
   }
 
-  Widget _buildHeader(BuildContext context, ExpenseProvider provider) {
+  Widget _buildHeader(BuildContext context, ExpenseProvider provider, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.teal.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.account_balance_wallet, color: Color(0xFF005C53), size: 36),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.teal.withValues(alpha: 0.15) : Colors.teal.shade50, 
+                  shape: BoxShape.circle
+                ),
+                child: Icon(Icons.account_balance_wallet_rounded, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53), size: 32),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('التقرير الشامل'.tr(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A))),
+                    Text('التقرير الشامل'.tr(), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.blue.shade300 : const Color(0xFF1E3A8A))),
                     const SizedBox(height: 4),
-                    Text('تطبيق قسمة للمصروفات'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('تطبيق قسمة للمصروفات'.tr(), style: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontSize: 13)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade200),
+              color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _infoItem(Icons.calendar_today, DateFormat('dd-MM-yyyy', context.locale.languageCode).format(DateTime.now())),
-                _infoItem(Icons.groups, provider.groupName.tr()),
-                _infoItem(Icons.payments, provider.currency.tr()),
+                _infoItem(Icons.calendar_today_rounded, DateFormat('dd-MM-yyyy', context.locale.languageCode).format(DateTime.now()), isDark),
+                _infoItem(Icons.groups_rounded, provider.groupName.tr(), isDark),
+                _infoItem(Icons.payments_rounded, provider.currency.tr(), isDark),
               ],
             ),
           )
@@ -163,34 +190,34 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoItem(IconData icon, String text) {
+  Widget _infoItem(IconData icon, String text, bool isDark) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF005C53)),
-        const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+        Icon(icon, size: 16, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53)),
+        const SizedBox(width: 6),
+        Text(text, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: isDark ? Colors.white : Colors.black87)),
       ],
     );
   }
 
-  Widget _buildResponsiveSummaryCards(double total, double share, int transactions, int persons) {
+  Widget _buildResponsiveSummaryCards(double total, double share, int transactions, int persons, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(child: _statCard('إجمالي المصروفات'.tr(), total.toStringAsFixed(2), Icons.account_balance_wallet, Colors.teal)),
+              Expanded(child: _statCard('إجمالي المصروفات'.tr(), total.toStringAsFixed(1), Icons.account_balance_wallet_rounded, Colors.teal, isDark)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('نصيب الفرد'.tr(), share.toStringAsFixed(2), Icons.person, Colors.blue)),
+              Expanded(child: _statCard('نصيب الفرد'.tr(), share.toStringAsFixed(1), Icons.person_rounded, Colors.blue, isDark)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _statCard('عدد العمليات'.tr(), '$transactions', Icons.receipt_long, Colors.purple)),
+              Expanded(child: _statCard('عدد العمليات'.tr(), '$transactions', Icons.receipt_long_rounded, Colors.purple, isDark)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('عدد الأشخاص'.tr(), '$persons', Icons.groups, Colors.orange)),
+              Expanded(child: _statCard('عدد الأشخاص'.tr(), '$persons', Icons.groups_rounded, Colors.orange, isDark)),
             ],
           ),
         ],
@@ -198,40 +225,42 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(String title, String value, IconData icon, Color color) {
+  Widget _statCard(String title, String value, IconData icon, MaterialColor color, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.05), blurRadius: 4)],
+        color: isDark ? Colors.grey.shade900 : Colors.white,
+        border: Border.all(color: isDark ? color.shade700.withValues(alpha: 0.3) : color.shade200),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: isDark ? 0.05 : 0.05), blurRadius: 10, offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 24),
+          Icon(icon, color: isDark ? color.shade400 : color, size: 28),
           const SizedBox(height: 8),
-          Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Text(title, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : color.shade800)),
         ],
       ),
     );
   }
 
-  Widget _buildPerfectTable(List<String> persons, Map<String, double> paid, double share, Map<String, double> balances) {
+  Widget _buildPerfectTable(List<String> persons, Map<String, double> paid, double share, Map<String, double> balances, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF005C53), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.teal.shade800 : const Color(0xFF005C53), width: 1.5),
         ),
         clipBehavior: Clip.antiAlias,
         child: Table(
           border: TableBorder.symmetric(
-            inside: BorderSide(color: Colors.grey.shade300, width: 1),
+            inside: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, width: 1),
           ),
           columnWidths: const {
             0: FlexColumnWidth(2.5), 
@@ -243,7 +272,7 @@ class ReportScreen extends StatelessWidget {
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
             TableRow(
-              decoration: const BoxDecoration(color: Color(0xFF005C53)),
+              decoration: BoxDecoration(color: isDark ? Colors.teal.shade900 : const Color(0xFF005C53)),
               children: [
                 _tableHeaderCell('الشخص'.tr()),
                 _tableHeaderCell('ما دفعه'.tr()),
@@ -258,17 +287,17 @@ class ReportScreen extends StatelessWidget {
               bool isSettled = bal.abs() <= 0.01;
 
               return TableRow(
-                decoration: const BoxDecoration(color: Colors.white),
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : Colors.white),
                 children: [
-                  _tableDataCell(person, isBold: true),
-                  _tableDataCell((paid[person] ?? 0.0).toStringAsFixed(0)),
-                  _tableDataCell(share.toStringAsFixed(0)),
+                  _tableDataCell(person, isDark, isBold: true),
+                  _tableDataCell((paid[person] ?? 0.0).toStringAsFixed(0), isDark),
+                  _tableDataCell(share.toStringAsFixed(0), isDark),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
                     child: Text(
                       isSettled ? '0' : '${bal > 0 ? '+' : ''}${bal.toStringAsFixed(0)}',
                       style: TextStyle(
-                        color: isSettled ? Colors.grey.shade600 : (isCreditor ? Colors.green.shade700 : Colors.red.shade700),
+                        color: isSettled ? Colors.grey : (isCreditor ? Colors.green.shade500 : Colors.red.shade400),
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -276,18 +305,18 @@ class ReportScreen extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                         decoration: BoxDecoration(
-                          color: (isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red)).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
+                          color: (isSettled ? Colors.grey : (isCreditor ? Colors.green : Colors.red)).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           isSettled ? 'خالص'.tr() : (isCreditor ? 'له'.tr() : 'عليه'.tr()),
                           style: TextStyle(
-                            color: isSettled ? Colors.grey.shade700 : (isCreditor ? Colors.green.shade700 : Colors.red.shade700),
+                            color: isSettled ? Colors.grey : (isCreditor ? Colors.green.shade500 : Colors.red.shade400),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -309,13 +338,13 @@ class ReportScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
         textAlign: TextAlign.center,
       ),
     );
   }
 
-  Widget _tableDataCell(String text, {bool isBold = false}) {
+  Widget _tableDataCell(String text, bool isDark, {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
       child: Text(
@@ -323,7 +352,7 @@ class ReportScreen extends StatelessWidget {
         style: TextStyle(
           fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
           fontSize: 13,
-          color: Colors.black87,
+          color: isDark ? Colors.white : Colors.black87,
         ),
         textAlign: TextAlign.center,
         overflow: TextOverflow.ellipsis,
@@ -331,72 +360,71 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  // 🔹 التعديل الأول: جعل كارت التسوية مدمجاً وفي المنتصف
-  Widget _buildSettlementsSection(List<Map<String, dynamic>> settlements, String currency) {
+  Widget _buildSettlementsSection(List<Map<String, dynamic>> settlements, String currency, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.teal.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.teal.shade200),
+        color: isDark ? Colors.teal.withValues(alpha: 0.1) : Colors.teal.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.teal.shade800 : Colors.teal.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.sync_alt, color: Color(0xFF005C53)),
+              Icon(Icons.sync_alt_rounded, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53)),
               const SizedBox(width: 8),
-              Text('اقتراحات التسوية'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF005C53))),
+              Text('اقتراحات التسوية'.tr(), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.teal.shade400 : const Color(0xFF005C53))),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           if (settlements.isEmpty)
             Text('لا توجد مبالغ مستحقة، جميع الحسابات خالصة!'.tr(), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
           else
             ...settlements.map((s) => Container(
-                  margin: const EdgeInsets.only(bottom: 8.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  margin: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.teal.withValues(alpha: 0.2), width: 1),
+                    color: isDark ? Colors.grey.shade900 : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.teal.withValues(alpha: isDark ? 0.3 : 0.2), width: 1),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02), blurRadius: 8, offset: const Offset(0, 4))
+                    ],
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center, // مركزنا العناصر بدل تباعدها
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.person, color: Colors.teal, size: 16),
-                          const SizedBox(width: 4),
-                          Text(s['from'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Icon(Icons.person_rounded, color: isDark ? Colors.teal.shade400 : Colors.teal, size: 18),
+                          const SizedBox(width: 6),
+                          Text(s['from'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : Colors.black87)),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('${s['amount'].toStringAsFixed(2)} $currency', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 14)),
-                            const SizedBox(height: 2),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('يدفع لـ'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 14),
-                              ],
-                            ),
-                          ],
-                        ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${s['amount'].toStringAsFixed(1)} $currency', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.red.shade400 : Colors.redAccent, fontSize: 14)),
+                          const SizedBox(height: 2),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('يدفع لـ'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                              const SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_rounded, color: isDark ? Colors.teal.shade400 : Colors.teal, size: 14),
+                            ],
+                          ),
+                        ],
                       ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(s['to'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.person_outline, color: Colors.purple, size: 16),
+                          Text(s['to'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : Colors.black87)),
+                          const SizedBox(width: 6),
+                          Icon(Icons.person_outline_rounded, color: isDark ? Colors.purple.shade300 : Colors.purple, size: 18),
                         ],
                       ),
                     ],
@@ -407,40 +435,37 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ExpenseProvider provider, double total, double share, Map<String, double> paid, Map<String, double> balances, List<Map<String, dynamic>> settlements, int transactions) {
+  Widget _buildActionButtons(BuildContext context, ExpenseProvider provider, double total, double share, Map<String, double> paid, Map<String, double> balances, List<Map<String, dynamic>> settlements, int transactions, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        alignment: WrapAlignment.center,
-        children: [
-          _actionButton(Icons.share, 'مشاركة وحفظ PDF'.tr(), Colors.blue, () async {
-            await _generateAndSharePDF(context, provider, total, share, paid, balances, settlements, transactions);
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionButton(IconData icon, String label, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        width: 170,
-        padding: const EdgeInsets.all(12),
+        width: double.infinity,
+        height: 55,
         decoration: BoxDecoration(
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-          borderRadius: BorderRadius.circular(8),
-          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: isDark ? [Colors.blue.shade700, Colors.blue.shade900] : [Colors.blue.shade400, Colors.blue.shade700],
+          ),
+          boxShadow: [
+            BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))
+          ]
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-          ],
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () async {
+              await _generateAndSharePDF(context, provider, total, share, paid, balances, settlements, transactions);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.share_rounded, color: Colors.white, size: 22),
+                const SizedBox(width: 10),
+                Text('مشاركة وحفظ PDF'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -623,7 +648,6 @@ class ReportScreen extends StatelessWidget {
                           if (settlements.isEmpty)
                             pw.Text('لا توجد تسويات مطلوبة.'.tr(), style: const pw.TextStyle(color: PdfColors.grey))
                           else
-                            // 🔹 التعديل الثاني: ضبط التباعد وتوسيط كارت التسويات داخل الـ PDF
                             ...settlements.map((s) => pw.Container(
                               margin: const pw.EdgeInsets.only(bottom: 8),
                               padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -633,18 +657,15 @@ class ReportScreen extends StatelessWidget {
                                 border: pw.Border.all(color: greenColor, width: 0.5),
                               ),
                               child: pw.Row(
-                                mainAxisAlignment: pw.MainAxisAlignment.center,
+                                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                                 children: [
                                   pw.Text(s['from'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.symmetric(horizontal: 20),
-                                    child: pw.Column(
-                                      children: [
-                                        pw.Text('${s['amount'].toStringAsFixed(2)} ${provider.currency.tr()}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 11)),
-                                        pw.SizedBox(height: 2),
-                                        pw.Text('يدفع لـ'.tr(), style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
-                                      ]
-                                    ),
+                                  pw.Column(
+                                    children: [
+                                      pw.Text('${s['amount'].toStringAsFixed(2)} ${provider.currency.tr()}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 11)),
+                                      pw.SizedBox(height: 2),
+                                      pw.Text('يدفع لـ'.tr(), style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                                    ]
                                   ),
                                   pw.Text(s['to'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),
                                 ]
@@ -741,12 +762,12 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E3A8A),
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF121212) : const Color(0xFF1E3A8A),
+        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -754,15 +775,17 @@ class ReportScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('تطبيق قسمة للمصروفات'.tr(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-              const Text('Qisma Expenses v1.0', style: TextStyle(color: Colors.white70, fontSize: 9)),
+              Text('تطبيق قسمة للمصروفات'.tr(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Qesma Expenses v1.0', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('تم الإنشاء'.tr(), style: const TextStyle(color: Colors.white, fontSize: 11)),
-              Text(DateFormat('dd-MM-yyyy hh:mm a', context.locale.languageCode).format(DateTime.now()), style: const TextStyle(color: Colors.white70, fontSize: 9)),
+              Text('تم الإنشاء'.tr(), style: const TextStyle(color: Colors.white, fontSize: 12)),
+              const SizedBox(height: 4),
+              Text(DateFormat('dd-MM-yyyy hh:mm a', context.locale.languageCode).format(DateTime.now()), style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 10)),
             ],
           )
         ],
