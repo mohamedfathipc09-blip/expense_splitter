@@ -79,6 +79,7 @@ class _QesmaDashboardScreenState extends State<QesmaDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.locale; // 🔹 مراقبة تغيير اللغة لتحديث الشريط السفلي الفوري
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -273,6 +274,8 @@ class _HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.locale; // 🔹 تحديث فوري عند تغيير اللغة
+
     final provider = context.watch<ExpenseProvider>();
 
     return SafeArea(
@@ -337,7 +340,6 @@ class _HeaderSection extends StatelessWidget {
         padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
         child: Row(
           children: [
-            // 🔹 أيقونة المجموعة الاحترافية (Logo Style)
             Hero(
               tag: 'app_logo',
               child: Container(
@@ -498,7 +500,6 @@ class _MainCardsSection extends StatelessWidget {
                     const SizedBox(height: 12),
                     FittedBox(
                       child: Text(
-                        // 🔹 استخدام FormatHelper هنا
                         '${FormatHelper.formatNumber(totalExpenses)} ${provider.currency.tr()}', 
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
@@ -577,7 +578,6 @@ class _MainCardsSection extends StatelessWidget {
                               const SizedBox(height: 4),
                               FittedBox(
                                 child: Text(
-                                  // 🔹 استخدام FormatHelper هنا
                                   '${'من هدف'.tr()} ${FormatHelper.formatNumber(targetBudget)}',
                                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10),
                                 ),
@@ -663,7 +663,6 @@ class _StatisticsGridSection extends StatelessWidget {
             children: [
               _StatCard(width: width, title: 'الأشخاص'.tr(), value: '$personsCount', icon: Icons.group_rounded, color: Colors.blue),
               _StatCard(width: width, title: 'العمليات'.tr(), value: '$operationsCount', icon: Icons.receipt_long_rounded, color: Colors.orange),
-              // 🔹 استخدام FormatHelper هنا
               _StatCard(width: width, title: 'متوسط العملية'.tr(), value: '${FormatHelper.formatNumber(average)} ${provider.currency.tr()}', icon: Icons.calculate_rounded, color: Colors.purple),
               _StatCard(width: width, title: 'أيام الدورة'.tr(), value: '$cycleDays ${'يوم'.tr()}', icon: Icons.calendar_month_rounded, color: Colors.teal),
             ],
@@ -887,7 +886,6 @@ class _SettlementSuggestionSection extends StatelessWidget {
     if (settlements.isEmpty) return const SizedBox.shrink();
 
     final suggestion = settlements.first;
-    // 🔹 استخدام FormatHelper هنا
     final amount = FormatHelper.formatNumber(suggestion['amount'] as double);
     final from = suggestion['from'] as String;
     final to = suggestion['to'] as String;
@@ -987,7 +985,6 @@ class _RecentTransactionsSection extends StatelessWidget {
                   ),
                   title: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('${expense.category.tr()} • ${'دفع:'.tr()} ${expense.payer} • ${DateFormat('d MMM', context.locale.languageCode).format(expense.date)}'),
-                  // 🔹 استخدام FormatHelper هنا
                   trailing: Text('${FormatHelper.formatNumber(expense.amount)} ${provider.currency.tr()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                   onTap: () {}, 
                 );
@@ -1038,14 +1035,13 @@ class _PeopleBalancesSection extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 10),
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, width: 1), // ✅ تم التعديل هنا
-                  ),
+                  borderRadius: BorderRadius.circular(20),
+                 side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200, width: 1), // ✅ الصح
+                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        // 🔹 تعديل الحرف ليكون بشكل احترافي Premium Avatar
                         Container(
                           width: 48,
                           height: 48,
@@ -1080,7 +1076,6 @@ class _PeopleBalancesSection extends StatelessWidget {
                             children: [
                               Text(person, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                               const SizedBox(height: 2),
-                              // 🔹 استخدام FormatHelper هنا
                               Text('${'دفع:'.tr()} ${FormatHelper.formatNumber(paid)} ${provider.currency.tr()} • ${'نصيبه:'.tr()} ${FormatHelper.formatNumber(sharePerPerson)}', 
                                 style: theme.textTheme.bodySmall?.copyWith(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)
                               ),
@@ -1090,7 +1085,6 @@ class _PeopleBalancesSection extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            // 🔹 استخدام FormatHelper هنا
                             Text('${FormatHelper.formatNumber(balance.abs())} ${provider.currency.tr()}', 
                               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isOwed ? Colors.green.shade500 : Colors.red.shade400)
                             ),

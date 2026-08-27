@@ -210,7 +210,7 @@ class ExpenseProvider with ChangeNotifier {
 
     // 🔹 الاحتفاظ بالنص القديم للحفاظ على الأرشيفات السابقة التي قد تعتمد عليه
     final List<String> summaryLines = settlementTransactions.map((s) {
-      return "${s['from']} يدفع لـ ${s['to']} مبلغ ${s['amount'].toStringAsFixed(2)} $currency";
+      return "${s['from']}دفع إلى ${s['to']} مبلغ ${s['amount'].toStringAsFixed(2)} $currency";
     }).toList();
 
     // 🔹 التعديل الجديد: حفظ البيانات الخام الديناميكية لتترجم بناءً على اللغة الحالية

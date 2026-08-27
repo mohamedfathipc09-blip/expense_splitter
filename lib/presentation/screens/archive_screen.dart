@@ -53,7 +53,7 @@ class ArchiveScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(16),
             itemCount: provider.archives.length,
-            // عكس الترتيب ليظهر الأحدث في الأعلى
+            // 🔹 عكس الترتيب ليظهر الأحدث في الأعلى
             itemBuilder: (context, reversedIndex) {
               final index = provider.archives.length - 1 - reversedIndex;
               final archive = provider.archives[index] as Map<dynamic, dynamic>;
@@ -121,7 +121,7 @@ class ArchiveScreen extends StatelessWidget {
                               children: [
                                 const Icon(Icons.handshake_rounded, color: Colors.teal, size: 20),
                                 const SizedBox(width: 8),
-                                Text('التسويات (من يدفع لمن):'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.teal)),
+                                Text('التسويات (من يدفع إلى من):'.tr(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.teal)),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -207,7 +207,7 @@ class ArchiveScreen extends StatelessWidget {
                                           ],
                                         ),
                                       ),
-                                      // 🔹 استخدام FormatHelper لمبلغ المصروف الفردي
+                                      // 🔹 استخدام FormatHelper لمبلغ العملية
                                       Text(
                                         '${FormatHelper.formatNumber(expAmount)} ${provider.currency.tr()}', 
                                         style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.redAccent, fontSize: 14)
@@ -230,6 +230,7 @@ class ArchiveScreen extends StatelessWidget {
     );
   }
 
+  // 🔹 ودجت لعرض التسوية بطريقة عصرية
   Widget _buildModernSettlementRow(Map<dynamic, dynamic> s, String currency, bool isDark) {
     final double amount = (s['amount'] as num?)?.toDouble() ?? 0.0;
 
@@ -253,7 +254,7 @@ class ArchiveScreen extends StatelessWidget {
           ),
           Column(
             children: [
-              Text('يدفع لـ'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text('يدفع إلى'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
               const Icon(Icons.arrow_forward_rounded, color: Colors.teal, size: 14),
             ],
           ),
@@ -264,7 +265,7 @@ class ArchiveScreen extends StatelessWidget {
               const Icon(Icons.person_outline_rounded, color: Colors.purple, size: 16),
             ],
           ),
-          // 🔹 استخدام FormatHelper لمبلغ التسوية
+          // 🔹 استخدام FormatHelper للديون
           Text(
             '${FormatHelper.formatNumber(amount)} $currency', 
             style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.redAccent)

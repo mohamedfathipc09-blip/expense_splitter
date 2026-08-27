@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف تنسيق الأرقام
 import 'package:flutter/services.dart' show rootBundle;
 import 'dart:typed_data';
 
@@ -207,9 +208,10 @@ class ReportScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _statCard('إجمالي المصروفات'.tr(), total.toStringAsFixed(1), Icons.account_balance_wallet_rounded, Colors.teal, isDark)),
+              // 🔹 استخدام FormatHelper للإجمالي والنصيب
+              Expanded(child: _statCard('إجمالي المصروفات'.tr(), FormatHelper.formatNumber(total), Icons.account_balance_wallet_rounded, Colors.teal, isDark)),
               const SizedBox(width: 12),
-              Expanded(child: _statCard('نصيب الفرد'.tr(), share.toStringAsFixed(1), Icons.person_rounded, Colors.blue, isDark)),
+              Expanded(child: _statCard('نصيب الفرد'.tr(), FormatHelper.formatNumber(share), Icons.person_rounded, Colors.blue, isDark)),
             ],
           ),
           const SizedBox(height: 12),
@@ -290,12 +292,13 @@ class ReportScreen extends StatelessWidget {
                 decoration: BoxDecoration(color: isDark ? const Color(0xFF1E1E1E) : Colors.white),
                 children: [
                   _tableDataCell(person, isDark, isBold: true),
-                  _tableDataCell((paid[person] ?? 0.0).toStringAsFixed(0), isDark),
-                  _tableDataCell(share.toStringAsFixed(0), isDark),
+                  // 🔹 استخدام FormatHelper
+                  _tableDataCell(FormatHelper.formatNumber(paid[person] ?? 0.0), isDark),
+                  _tableDataCell(FormatHelper.formatNumber(share), isDark),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
                     child: Text(
-                      isSettled ? '0' : '${bal > 0 ? '+' : ''}${bal.toStringAsFixed(0)}',
+                      isSettled ? '0' : '${bal > 0 ? '+' : ''}${FormatHelper.formatNumber(bal.abs())}',
                       style: TextStyle(
                         color: isSettled ? Colors.grey : (isCreditor ? Colors.green.shade500 : Colors.red.shade400),
                         fontWeight: FontWeight.bold,
@@ -407,12 +410,13 @@ class ReportScreen extends StatelessWidget {
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('${s['amount'].toStringAsFixed(1)} $currency', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.red.shade400 : Colors.redAccent, fontSize: 14)),
+                          // 🔹 استخدام FormatHelper هنا
+                          Text('${FormatHelper.formatNumber(s['amount'])} $currency', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.red.shade400 : Colors.redAccent, fontSize: 14)),
                           const SizedBox(height: 2),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('يدفع لـ'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                              Text('يدفع إلى'.tr(), style: const TextStyle(fontSize: 10, color: Colors.grey)),
                               const SizedBox(width: 4),
                               Icon(Icons.arrow_forward_rounded, color: isDark ? Colors.teal.shade400 : Colors.teal, size: 14),
                             ],
@@ -570,8 +574,9 @@ class ReportScreen extends StatelessWidget {
                 children: [
                   _buildPdfStatCard('عدد الأشخاص'.tr(), '${provider.persons.length}', 'أشخاص'.tr(), arabicFontBold, tealColor),
                   _buildPdfStatCard('عدد العمليات'.tr(), '$totalTransactions', 'عملية'.tr(), arabicFontBold, PdfColor.fromHex('#6A1B9A')),
-                  _buildPdfStatCard('نصيب الفرد'.tr(), share.toStringAsFixed(2), provider.currency.tr(), arabicFontBold, PdfColor.fromHex('#1565C0')),
-                  _buildPdfStatCard('إجمالي المصروفات'.tr(), totalExpenses.toStringAsFixed(2), provider.currency.tr(), arabicFontBold, greenColor),
+                  // 🔹 استخدام FormatHelper لـ PDF
+                  _buildPdfStatCard('نصيب الفرد'.tr(), FormatHelper.formatNumber(share), provider.currency.tr(), arabicFontBold, PdfColor.fromHex('#1565C0')),
+                  _buildPdfStatCard('إجمالي المصروفات'.tr(), FormatHelper.formatNumber(totalExpenses), provider.currency.tr(), arabicFontBold, greenColor),
                 ]
               ),
               
@@ -600,12 +605,13 @@ class ReportScreen extends StatelessWidget {
                       decoration: const pw.BoxDecoration(color: PdfColors.white),
                       children: [
                         _pdfTableCell(person, arabicFontBold),
-                        _pdfTableCell((paidAmounts[person] ?? 0.0).toStringAsFixed(2), arabicFontBold),
-                        _pdfTableCell(share.toStringAsFixed(2), arabicFontBold),
+                        // 🔹 استخدام FormatHelper لـ PDF
+                        _pdfTableCell(FormatHelper.formatNumber(paidAmounts[person] ?? 0.0), arabicFontBold),
+                        _pdfTableCell(FormatHelper.formatNumber(share), arabicFontBold),
                         pw.Padding(
                           padding: const pw.EdgeInsets.symmetric(vertical: 8),
                           child: pw.Text(
-                            isSettled ? '0.00' : '${bal > 0 ? '+' : ''}${bal.toStringAsFixed(2)}', 
+                            isSettled ? '0.00' : '${bal > 0 ? '+' : ''}${FormatHelper.formatNumber(bal.abs())}', 
                             style: pw.TextStyle(font: arabicFontBold, fontSize: 11, color: isSettled ? PdfColors.grey : (isCreditor ? greenColor : redColor)), 
                             textAlign: pw.TextAlign.center
                           )
@@ -662,9 +668,10 @@ class ReportScreen extends StatelessWidget {
                                   pw.Text(s['from'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),
                                   pw.Column(
                                     children: [
-                                      pw.Text('${s['amount'].toStringAsFixed(2)} ${provider.currency.tr()}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 11)),
+                                      // 🔹 استخدام FormatHelper لـ PDF
+                                      pw.Text('${FormatHelper.formatNumber(s['amount'])} ${provider.currency.tr()}', style: pw.TextStyle(font: arabicFontBold, color: redColor, fontSize: 11)),
                                       pw.SizedBox(height: 2),
-                                      pw.Text('يدفع لـ'.tr(), style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
+                                      pw.Text('يدفع إلى'.tr(), style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
                                     ]
                                   ),
                                   pw.Text(s['to'], style: pw.TextStyle(font: arabicFontBold, fontSize: 12)),

@@ -18,10 +18,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   String? _selectedPerson;
-  String _selectedCategory = 'عام'; // التصنيف الافتراضي
+  String _selectedCategory = 'عام'; 
   DateTime _selectedDate = DateTime.now();
 
-  // 🔹 أزلنا .tr() من هنا وسنقوم بترجمتها عند العرض لضمان عدم حدوث أخطاء
   final List<String> _categories = ['عام', 'طعام ومطاعم', 'مشتريات', 'مواصلات', 'سكن وفواتير'];
 
   @override
@@ -29,7 +28,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     super.initState();
     if (widget.expenseToEdit != null) {
       _titleController.text = widget.expenseToEdit!.title;
-      _amountController.text = widget.expenseToEdit!.amount.toString();
+      // إزالة الفواصل إن وجدت عند التعديل لضمان قراءتها بشكل صحيح في الحقل
+      _amountController.text = widget.expenseToEdit!.amount.toString().replaceAll(',', '');
       _selectedPerson = widget.expenseToEdit!.payer;
       _selectedCategory = widget.expenseToEdit!.category;
       _selectedDate = widget.expenseToEdit!.date;
@@ -68,17 +68,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🔹 كارت تجميع البيانات
+              // 🔹 كارت تجميع البيانات (Modern Card)
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade100),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     )
                   ],
                 ),
@@ -91,7 +92,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       icon: Icons.edit_note_rounded,
                       isDark: isDark,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // حقل المبلغ
                     _buildCustomTextField(
@@ -101,7 +102,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       isDark: isDark,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // حقل من دفع
                     _buildCustomDropdown(
@@ -112,7 +113,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       items: provider.persons.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
                       onChanged: (val) => setState(() => _selectedPerson = val),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // حقل التصنيف
                     _buildCustomDropdown(
@@ -123,7 +124,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c.tr()))).toList(),
                       onChanged: (val) => setState(() => _selectedCategory = val!),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     
                     // حقل التاريخ
                     Material(
@@ -140,7 +141,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               return Theme(
                                 data: theme.copyWith(
                                   colorScheme: theme.colorScheme.copyWith(
-                                    primary: Colors.indigo, // لون النتيجة المحددة
+                                    primary: isDark ? Colors.indigo.shade300 : Colors.indigo,
                                   ),
                                 ),
                                 child: child!,
@@ -168,12 +169,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                     const SizedBox(height: 4),
                                     Text(
                                       DateFormat('yyyy-MM-dd', context.locale.languageCode).format(_selectedDate),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: isDark ? Colors.white : Colors.black87),
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
                             ],
                           ),
                         ),
@@ -185,57 +186,72 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               
               const SizedBox(height: 32),
               
-              // 🔹 زر الحفظ الاحترافي
-              SizedBox(
+              // 🔹 زر الحفظ الاحترافي (Modern Gradient Button)
+              Container(
+                width: double.infinity,
                 height: 55,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: isDark ? [Colors.indigo.shade700, Colors.indigo.shade900] : [Colors.indigo.shade400, Colors.indigo.shade600],
                   ),
-                  onPressed: () {
-                    if (_titleController.text.isEmpty || _amountController.text.isEmpty || _selectedPerson == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('أكمل البيانات المطلوبة'.tr()),
-                          backgroundColor: Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        )
+                  boxShadow: [
+                    BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))
+                  ]
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      if (_titleController.text.isEmpty || _amountController.text.isEmpty || _selectedPerson == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('أكمل البيانات المطلوبة'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          )
+                        );
+                        return;
+                      }
+
+                      // 🔹 الحماية من الأخطاء (Safe Parsing): استبدال أي فاصلة بنص فارغ لتجنب خطأ التحويل
+                      String cleanAmount = _amountController.text.replaceAll(',', '').replaceAll(' ', '');
+                      double parsedAmount = double.tryParse(cleanAmount) ?? 0.0;
+                      
+                      if (parsedAmount <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('الرجاء إدخال مبلغ صحيح'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            backgroundColor: Colors.orange.shade700,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          )
+                        );
+                        return;
+                      }
+
+                      final newExp = ExpenseModel(
+                        id: widget.expenseToEdit?.id ?? const Uuid().v4(),
+                        title: _titleController.text,
+                        amount: parsedAmount,
+                        payer: _selectedPerson!,
+                        date: _selectedDate,
+                        category: _selectedCategory,
                       );
-                      return;
-                    }
 
-                    // 🔹 الحماية من الأخطاء (Safe Parsing)
-                    double parsedAmount = double.tryParse(_amountController.text) ?? 0.0;
-                    if (parsedAmount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('الرجاء إدخال مبلغ صحيح'.tr()),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                        )
-                      );
-                      return;
-                    }
-
-                    final newExp = ExpenseModel(
-                      id: widget.expenseToEdit?.id ?? const Uuid().v4(),
-                      title: _titleController.text,
-                      amount: parsedAmount,
-                      payer: _selectedPerson!,
-                      date: _selectedDate,
-                      category: _selectedCategory,
-                    );
-
-                    if (widget.expenseToEdit == null) {
-                      provider.addExpense(newExp);
-                    } else {
-                      provider.updateExpense(newExp);
-                    }
-                    Navigator.pop(context);
-                  },
-                  child: Text('حفظ'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      if (widget.expenseToEdit == null) {
+                        provider.addExpense(newExp);
+                      } else {
+                        provider.updateExpense(newExp);
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Center(
+                      child: Text('حفظ'.tr(), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -258,8 +274,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
         prefixIcon: Icon(icon, color: Colors.indigo.shade400),
         filled: true,
         fillColor: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
@@ -273,7 +291,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.indigo, width: 2),
+          borderSide: BorderSide(color: isDark ? Colors.indigo.shade300 : Colors.indigo, width: 2),
         ),
       ),
     );
@@ -294,9 +312,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       value: value,
       items: items,
       onChanged: onChanged,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded),
+      dropdownColor: isDark ? Colors.grey.shade900 : Colors.white,
+      style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontFamily: 'Cairo'),
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
         prefixIcon: Icon(icon, color: Colors.indigo.shade400),
         filled: true,
         fillColor: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
@@ -310,7 +331,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.indigo, width: 2),
+          borderSide: BorderSide(color: isDark ? Colors.indigo.shade300 : Colors.indigo, width: 2),
         ),
       ),
     );

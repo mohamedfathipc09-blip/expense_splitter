@@ -3,6 +3,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'format_helper.dart'; // 🔹 استدعاء ملف التنسيق (تأكد من المسار حسب بنية مجلداتك)
 
 class PdfHelper {
   static Future<void> generateAndShareReport({
@@ -60,12 +61,14 @@ class PdfHelper {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    '${'إجمالي المصروفات:'.tr()} ${totalExpenses.toStringAsFixed(2)} $currency',
+                    // 🔹 استخدام FormatHelper هنا
+                    '${'إجمالي المصروفات:'.tr()} ${FormatHelper.formatNumber(totalExpenses)} $currency',
                     style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
                   ),
                   pw.SizedBox(height: 6),
                   pw.Text(
-                    '${'نصيب الفرد:'.tr()} ${individualShare.toStringAsFixed(2)} $currency',
+                    // 🔹 استخدام FormatHelper هنا
+                    '${'نصيب الفرد:'.tr()} ${FormatHelper.formatNumber(individualShare)} $currency',
                     style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
                   ),
                 ],
@@ -90,13 +93,14 @@ class PdfHelper {
               headers: ['الشخص'.tr(), 'ما دفعه'.tr(), 'الرصيد النهائي'.tr()],
               data: accountStatuses.map((s) {
                 double balance = s['balance'];
-                // 🔹 تم التعديل هنا ليكون الرقم بجانبه الحالة لتجنب لخبطة الاتجاهات
+                // 🔹 استخدام FormatHelper للرصيد
                 String status = balance > 0 
-                    ? '${balance.toStringAsFixed(1)} (${'له'.tr()})' 
-                    : (balance < 0 ? '${balance.abs().toStringAsFixed(1)} (${'عليه'.tr()})' : 'خالص'.tr());
+                    ? '${FormatHelper.formatNumber(balance)} (${'له'.tr()})' 
+                    : (balance < 0 ? '${FormatHelper.formatNumber(balance.abs())} (${'عليه'.tr()})' : 'خالص'.tr());
                 return [
                   s['name'],
-                  '${s['totalPaid'].toStringAsFixed(1)} $currency',
+                  // 🔹 استخدام FormatHelper لما دفعه
+                  '${FormatHelper.formatNumber(s['totalPaid'])} $currency',
                   status,
                 ];
               }).toList(),
@@ -111,7 +115,6 @@ class PdfHelper {
               ),
               pw.SizedBox(height: 8),
               
-              // 🔹 التعديل الجذري: فصل العناصر لتجنب اختلاط اللغات (RTL/LTR Mixing)
               ...settlements.map((s) => pw.Container(
                 margin: const pw.EdgeInsets.only(bottom: 8),
                 padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -126,16 +129,16 @@ class PdfHelper {
                     // من يدفع
                     pw.Text(s['from'], style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
                     
-                    // المنتصف (المبلغ وكلمة "يدفع لـ")
                     pw.Column(
                       children: [
                         pw.Text(
-                          '${(s['amount'] as num).toDouble().toStringAsFixed(2)} $currency',
+                          // 🔹 استخدام FormatHelper لمبلغ التسوية
+                          '${FormatHelper.formatNumber(s['amount'])} $currency',
                           style: pw.TextStyle(color: PdfColors.red800, fontWeight: pw.FontWeight.bold, fontSize: 12),
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          'يدفع لـ'.tr(),
+                          'يدفع إلى'.tr(),
                           style: const pw.TextStyle(color: PdfColors.grey600, fontSize: 10),
                         ),
                       ],

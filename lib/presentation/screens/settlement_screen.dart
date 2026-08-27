@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_localization/easy_localization.dart'; // 🔹 إضافة مكتبة الترجمة
+import 'package:easy_localization/easy_localization.dart'; 
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف التنسيق الجديد
 
 class SettlementScreen extends StatelessWidget {
   const SettlementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 تم إزالة Directionality لكي تعمل الشاشة باللغتين تلقائياً
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6F9),
       appBar: AppBar(
-        title: Text('تسوية الحسابات'.tr()),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: Text(
+          'تسوية الحسابات'.tr(),
+          style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+        ),
         centerTitle: true,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, provider, child) {
-          // استدعاء الخوارزمية الذكية الجديدة التي برمجناها
           final settlements = provider.settlementTransactions; 
 
           if (settlements.isEmpty) {
@@ -24,11 +33,18 @@ class SettlementScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 80),
-                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.green.withValues(alpha: 0.1) : Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.check_circle_outline_rounded, color: Colors.green.shade400, size: 80),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     provider.expenses.isEmpty ? 'لا توجد عمليات لتسويتها'.tr() : 'جميع الحسابات تمت تسويتها! 🎉'.tr(), 
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.green.shade300 : Colors.green.shade700)
                   ),
                 ],
               ),
@@ -38,16 +54,21 @@ class SettlementScreen extends StatelessWidget {
           return Column(
             children: [
               Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 padding: const EdgeInsets.all(16),
-                color: Colors.teal.withValues(alpha: 0.1),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.teal.withValues(alpha: 0.1) : Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.teal.withValues(alpha: 0.3)),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.teal),
-                    const SizedBox(width: 8),
+                    Icon(Icons.info_outline_rounded, color: isDark ? Colors.teal.shade300 : Colors.teal),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'هذه أقل عدد من التحويلات المطلوبة لتسوية جميع الحسابات بين الأفراد.'.tr(),
-                        style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: TextStyle(color: isDark ? Colors.teal.shade300 : Colors.teal.shade800, fontWeight: FontWeight.bold, fontSize: 13, height: 1.4),
                       ),
                     ),
                   ],
@@ -55,58 +76,118 @@ class SettlementScreen extends StatelessWidget {
               ),
               Expanded(
                 child: ListView.builder(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   itemCount: settlements.length,
                   itemBuilder: (context, index) {
                     final s = settlements[index];
-                    return Card(
-                      elevation: 2,
+                    final double amount = (s['amount'] as num?)?.toDouble() ?? 0.0;
+
+                    return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        leading: const CircleAvatar(
-                          backgroundColor: Colors.redAccent, 
-                          child: Icon(Icons.arrow_upward, color: Colors.white)
-                        ),
-                        title: Row(
-                          children: [
-                            Text('${s['from']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text(' يدفع إلى '.tr(), style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                            Text('${s['to']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        trailing: Text(
-                          '${s['amount'].toStringAsFixed(2)} ${provider.currency.tr()}', 
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16)
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04), 
+                            blurRadius: 10, 
+                            offset: const Offset(0, 4)
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.person_rounded, color: isDark ? Colors.teal.shade400 : Colors.teal, size: 20),
+                              const SizedBox(width: 6),
+                              Text('${s['from']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
+                            ],
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 🔹 استخدام FormatHelper لتنسيق مبلغ التسوية
+                              Text(
+                                '${FormatHelper.formatNumber(amount)} ${provider.currency.tr()}', 
+                                style: TextStyle(fontWeight: FontWeight.w900, color: isDark ? Colors.red.shade400 : Colors.redAccent, fontSize: 15)
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('يدفع إلى'.tr(), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_rounded, color: isDark ? Colors.teal.shade400 : Colors.teal, size: 14),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${s['to']}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
+                              const SizedBox(width: 6),
+                              Icon(Icons.person_outline_rounded, color: isDark ? Colors.purple.shade300 : Colors.purple, size: 20),
+                            ],
+                          ),
+                        ],
                       ),
                     );
                   },
                 ),
               ),
+              
+              // 🔹 زر إنهاء الدورة (Modern Button)
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: Colors.teal,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Container(
+                  width: double.infinity,
+                  height: 55,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      colors: isDark ? [Colors.teal.shade700, Colors.teal.shade900] : [Colors.teal.shade400, Colors.teal.shade600],
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: Colors.teal.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))
+                    ]
                   ),
-                  icon: const Icon(Icons.archive, color: Colors.white),
-                  label: Text('إنهاء الدورة وأرشفة العمليات'.tr(), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  onPressed: () {
-                    // 🔹 ربط لغة التاريخ بلغة التطبيق الحالية لإنشاء اسم الأرشيف
-                    String archiveTitle = '${'دورة'.tr()} ${DateFormat('MMMM yyyy', context.locale.languageCode).format(DateTime.now())}';
-                    provider.settleAndArchive(archiveTitle);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('تمت التسوية والأرشفة بنجاح!'.tr()), backgroundColor: Colors.green)
-                    );
-                    Navigator.pop(context); // العودة للرئيسية
-                  },
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        String archiveTitle = '${'دورة'.tr()} ${DateFormat('MMMM yyyy', context.locale.languageCode).format(DateTime.now())}';
+                        provider.settleAndArchive(archiveTitle);
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('تمت التسوية والأرشفة بنجاح!'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)), 
+                            backgroundColor: Colors.green.shade600,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          )
+                        );
+                        Navigator.pop(context); 
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 22),
+                          const SizedBox(width: 10),
+                          Text('إنهاء الدورة وأرشفة العمليات'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              )
+              ),
             ],
           );
         },

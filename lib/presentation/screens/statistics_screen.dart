@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../providers/expense_provider.dart';
+import '../../core/helpers/format_helper.dart'; // 🔹 استدعاء ملف التنسيق الجديد
 
 class StatisticsScreen extends StatelessWidget {
   const StatisticsScreen({super.key});
@@ -136,7 +137,8 @@ class StatisticsScreen extends StatelessWidget {
             children: [
               Text('إجمالي الصرف'.tr(), style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              Text('${total.toStringAsFixed(1)} $currency', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
+              // 🔹 استخدام FormatHelper للإجمالي
+              Text('${FormatHelper.formatNumber(total)} $currency', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
             ],
           ),
           Container(
@@ -201,7 +203,8 @@ class StatisticsScreen extends StatelessWidget {
                       children: [
                         Text('الإجمالي'.tr(), style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
-                        Text(total.toStringAsFixed(0), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                        // 🔹 استخدام FormatHelper للرقم داخل الدائرة
+                        Text(FormatHelper.formatNumber(total), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
                       ],
                     )
                   ],
@@ -250,7 +253,8 @@ class StatisticsScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('${item.value.toStringAsFixed(1)} $currency', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
+                        // 🔹 استخدام FormatHelper للقيم الفرعية
+                        Text('${FormatHelper.formatNumber(item.value)} $currency', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
                         const SizedBox(height: 2),
                         Text('${percentage.toStringAsFixed(1)}%', style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
                       ],
@@ -313,7 +317,7 @@ class _DonutChartPainter extends CustomPainter {
         ..color = colors[i % colors.length]
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round; // 🔹 السر هنا: حواف دائرية ناعمة جداً
+        ..strokeCap = StrokeCap.round; 
 
       // يتم إنقاص زاوية الرسم قليلاً جداً لتفادي تداخل الحواف الدائرية بشكل مزعج
       final actualSweep = sweepAngle > 0.05 ? sweepAngle - 0.05 : sweepAngle;

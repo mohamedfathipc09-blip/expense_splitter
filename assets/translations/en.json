@@ -133,7 +133,7 @@
   "لا توجد عمليات لتسويتها": "No transactions to settle",
   "جميع الحسابات تمت تسويتها! 🎉": "All accounts are settled! 🎉",
   "هذه أقل عدد من التحويلات المطلوبة لتسوية جميع الحسابات بين الأفراد.": "This is the minimum number of transfers required to settle all accounts between individuals.",
-  " يدفع إلى ": " pays to ",
+  "يدفع إلى": " pays to ",
   "إنهاء الدورة وأرشفة العمليات": "End Cycle & Archive Transactions",
   "تمت التسوية والأرشفة بنجاح!": "Settlement and archiving completed successfully!",
   "سجل العمليات": "Transactions History",
@@ -213,7 +213,12 @@
   "الإشعارات والتنبيهات": "Notifications and Alerts",
   "الإشعارات": "Notifications",
   "ابحث عن عملية أو شخص...": "Search for a transaction or person...",
-  "يدفع إلى": "pays to",
   "المجموعة جاهزة!": "Group is ready!",
-  "أضف أول مصروف.": "Add the first expense."
+  "أضف أول مصروف.": "Add the first expense.",
+  "لا يوجد أشخاص": "No people found",
+"اضغط على الزر بالأسفل لإضافة أشخاص": "Click the button below to add people",
+"لا توجد عمليات في هذا التصنيف.": "No transactions in this category.",
+"لا توجد عمليات مطابقة لبحثك.": "No transactions matching your search.",
+  "المظهر والتخصيص": "Appearance & Customization",
+  "إدارة البيانات": "Data Management"
 }
